@@ -28,8 +28,9 @@ import {
   ChevronRightRegular,
   StarRegular,
   StarFilled,
+  EditRegular,
 } from '@fluentui/react-icons';
-import { fetchComponentById, deleteComponent, trackDownload, rateComponent, formatAuthorName, ComponentDetail } from '../services/api';
+import { fetchComponentById, deleteComponent, trackDownload, rateComponent, updateComponent, formatAuthorName, getDownloadUrl, ComponentDetail } from '../services/api';
 import { getAuthInfo, SwaUser } from '../services/auth';
 import ErrorBar from '../components/ErrorBar';
 
@@ -240,6 +241,113 @@ const useStyles = makeStyles({
       borderBottomColor: 'rgba(209, 52, 56, 0.3)',
       borderLeftColor: 'rgba(209, 52, 56, 0.3)',
     },
+  },
+  editBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    ...shorthands.padding('10px', '20px'),
+    ...shorthands.borderRadius('12px'),
+    ...shorthands.border('1px', 'solid', 'rgba(0, 120, 212, 0.2)'),
+    backgroundColor: 'rgba(0, 120, 212, 0.05)',
+    color: '#0078d4',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transitionDuration: '0.2s',
+    transitionProperty: 'all',
+    fontFamily: 'inherit',
+    ':hover': {
+      backgroundColor: 'rgba(0, 120, 212, 0.1)',
+      borderTopColor: 'rgba(0, 120, 212, 0.3)',
+      borderRightColor: 'rgba(0, 120, 212, 0.3)',
+      borderBottomColor: 'rgba(0, 120, 212, 0.3)',
+      borderLeftColor: 'rgba(0, 120, 212, 0.3)',
+    },
+  },
+  editOverlay: {
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backdropFilter: 'blur(6px)',
+    WebkitBackdropFilter: 'blur(6px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9998,
+  },
+  editDialog: {
+    backgroundColor: 'white',
+    ...shorthands.borderRadius('20px'),
+    ...shorthands.padding('32px'),
+    width: '90%',
+    maxWidth: '560px',
+    maxHeight: '85vh',
+    overflowY: 'auto' as const,
+    boxShadow: '0 24px 64px rgba(0, 0, 0, 0.2)',
+  },
+  editDialogTitle: {
+    fontSize: '22px',
+    fontWeight: '700',
+    color: tokens.colorNeutralForeground1,
+    marginBottom: '24px',
+  },
+  editField: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    marginBottom: '20px',
+  },
+  editLabel: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: tokens.colorNeutralForeground1,
+  },
+  editInput: {
+    width: '100%',
+    ...shorthands.padding('12px', '16px'),
+    fontSize: '15px',
+    ...shorthands.border('1px', 'solid', 'rgba(0, 0, 0, 0.1)'),
+    ...shorthands.borderRadius('12px'),
+    outlineStyle: 'none',
+    fontFamily: 'inherit',
+    color: tokens.colorNeutralForeground1,
+    ':focus': {
+      borderTopColor: '#0078d4',
+      borderRightColor: '#0078d4',
+      borderBottomColor: '#0078d4',
+      borderLeftColor: '#0078d4',
+      boxShadow: '0 0 0 3px rgba(0, 120, 212, 0.1)',
+    },
+  },
+  editTextarea: {
+    width: '100%',
+    ...shorthands.padding('12px', '16px'),
+    fontSize: '15px',
+    ...shorthands.border('1px', 'solid', 'rgba(0, 0, 0, 0.1)'),
+    ...shorthands.borderRadius('12px'),
+    outlineStyle: 'none',
+    fontFamily: 'inherit',
+    color: tokens.colorNeutralForeground1,
+    resize: 'vertical' as const,
+    minHeight: '100px',
+    ':focus': {
+      borderTopColor: '#0078d4',
+      borderRightColor: '#0078d4',
+      borderBottomColor: '#0078d4',
+      borderLeftColor: '#0078d4',
+      boxShadow: '0 0 0 3px rgba(0, 120, 212, 0.1)',
+    },
+  },
+  editActions: {
+    display: 'flex',
+    gap: '10px',
+    justifyContent: 'flex-end',
+    marginTop: '8px',
   },
   section: {
     marginTop: '32px',
@@ -522,6 +630,11 @@ export default function DetailPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<SwaUser | null>(null);
   const [error, setError] = useState<unknown>(null);
 
@@ -550,27 +663,52 @@ export default function DetailPage() {
 
   const handleDownload = async () => {
     if (!id || !component) return;
-    try {
-      const result = await trackDownload(id);
-      setDownloadCount(result.download_count);
-    } catch {
-      // download tracking is best-effort
+    // Track download (best-effort), then navigate to server-side download endpoint
+    trackDownload(id).then((r) => setDownloadCount(r.download_count)).catch(() => {});
+    // Use hidden link to trigger browser download via server endpoint with Content-Disposition: attachment
+    const a = document.createElement('a');
+    a.href = getDownloadUrl(id);
+    a.download = component.file_name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const openEditDialog = () => {
+    if (!component) return;
+    setEditTitle(component.title);
+    setEditDescription(component.description);
+    setEditFile(null);
+    setEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!id || !component) return;
+    if (!editTitle.trim() || !editDescription.trim()) {
+      setError(new Error('Le titre et la description sont requis'));
+      return;
     }
-    // Force file download instead of opening in browser
+    setSaving(true);
+    setError(null);
     try {
-      const response = await fetch(component.fileUrl);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = component.file_name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch {
-      // Fallback: open in new tab
-      window.open(component.fileUrl, '_blank');
+      const formData = new FormData();
+      formData.append('title', editTitle.trim());
+      formData.append('description', editDescription.trim());
+      if (editFile) {
+        formData.append('file', editFile);
+      }
+      await updateComponent(id, formData);
+      // Reload component data
+      const updated = await fetchComponentById(id);
+      setComponent(updated);
+      setDownloadCount(updated.download_count || 0);
+      setAverageRating(updated.average_rating || 0);
+      setRatingCount(updated.rating_count || 0);
+      setEditing(false);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -694,6 +832,12 @@ export default function DetailPage() {
                 <ArrowDownloadRegular fontSize={18} />
                 Télécharger
               </button>
+              {isOwner && (
+                <button className={styles.editBtn} onClick={openEditDialog}>
+                  <EditRegular fontSize={16} />
+                  Modifier
+                </button>
+              )}
               {isOwner && (
                 <Dialog>
                   <DialogTrigger disableButtonEnhancement>
@@ -884,6 +1028,63 @@ export default function DetailPage() {
               <ChevronRightRegular fontSize={20} />
             </button>
           )}
+        </div>
+      )}
+
+      {/* Edit dialog */}
+      {editing && (
+        <div className={styles.editOverlay} onClick={() => setEditing(false)}>
+          <div className={styles.editDialog} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.editDialogTitle}>Modifier le composant</div>
+            <div className={styles.editField}>
+              <label className={styles.editLabel}>Titre</label>
+              <input
+                className={styles.editInput}
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                maxLength={200}
+              />
+            </div>
+            <div className={styles.editField}>
+              <label className={styles.editLabel}>Description</label>
+              <textarea
+                className={styles.editTextarea}
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                rows={5}
+              />
+            </div>
+            <div className={styles.editField}>
+              <label className={styles.editLabel}>Remplacer le fichier (optionnel)</label>
+              <input
+                type="file"
+                accept=".zip,.html,.htm"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) setEditFile(f);
+                }}
+                style={{ fontSize: '14px' }}
+              />
+              {editFile && (
+                <div style={{ fontSize: '13px', color: '#0078d4', marginTop: '4px' }}>
+                  Nouveau fichier : {editFile.name}
+                </div>
+              )}
+            </div>
+            {error ? (
+              <div style={{ marginBottom: '16px' }}>
+                <ErrorBar error={error} fallbackMessage="Erreur lors de la modification" />
+              </div>
+            ) : null}
+            <div className={styles.editActions}>
+              <Button appearance="secondary" onClick={() => setEditing(false)} disabled={saving}>
+                Annuler
+              </Button>
+              <Button appearance="primary" onClick={handleSaveEdit} disabled={saving}>
+                {saving ? 'Enregistrement...' : 'Enregistrer'}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

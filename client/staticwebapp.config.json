@@ -16,7 +16,7 @@
     },
     {
       "route": "/api/downloads/*",
-      "methods": ["POST"],
+      "methods": ["GET", "POST"],
       "allowedRoles": ["anonymous"]
     },
     {

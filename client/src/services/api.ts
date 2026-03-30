@@ -110,6 +110,16 @@ export async function createComponent(formData: FormData): Promise<{ id: string 
   return res.json();
 }
 
+export async function updateComponent(id: string, formData: FormData): Promise<void> {
+  const res = await fetch(`${API_BASE}/components/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: formData,
+  });
+  if (!res.ok) {
+    await throwApiError(res, 'Update failed');
+  }
+}
+
 export async function deleteComponent(id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/components/${encodeURIComponent(id)}`, {
     method: 'DELETE',
@@ -117,6 +127,10 @@ export async function deleteComponent(id: string): Promise<void> {
   if (!res.ok) {
     await throwApiError(res, 'Delete failed');
   }
+}
+
+export function getDownloadUrl(id: string): string {
+  return `${API_BASE}/downloads/${encodeURIComponent(id)}/file`;
 }
 
 export async function trackDownload(id: string): Promise<{ download_count: number }> {

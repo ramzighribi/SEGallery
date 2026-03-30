@@ -44,6 +44,13 @@ export async function deleteBlob(containerName: string, blobName: string): Promi
   await blockBlobClient.deleteIfExists();
 }
 
+export async function downloadBlobBuffer(containerName: string, blobName: string): Promise<Buffer> {
+  const client = getClient();
+  const containerClient = client.getContainerClient(containerName);
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+  return blockBlobClient.downloadToBuffer();
+}
+
 // Cache user delegation key (valid 1h, refreshed every 50min)
 let cachedUDK: { key: UserDelegationKey; expiresOn: Date } | null = null;
 

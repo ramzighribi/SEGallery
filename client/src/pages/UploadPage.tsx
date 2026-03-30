@@ -396,6 +396,7 @@ export default function UploadPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [success, setSuccess] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const screenshotInputRef = useRef<HTMLInputElement>(null);
@@ -436,6 +437,36 @@ export default function UploadPage() {
     URL.revokeObjectURL(screenshotPreviews[index]);
     setScreenshots((prev) => prev.filter((_, i) => i !== index));
     setScreenshotPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length === 0) return;
+
+    const dropped = droppedFiles[0];
+    const ext = dropped.name.split('.').pop()?.toLowerCase();
+    if (!['zip', 'html', 'htm'].includes(ext || '')) {
+      setError(new Error('Seuls les fichiers .zip, .html ou .htm sont acceptés'));
+      return;
+    }
+    setFile(dropped);
+    setError(null);
   };
 
   const handleSubmit = async () => {
@@ -565,11 +596,24 @@ export default function UploadPage() {
                 </button>
               </div>
             ) : (
-              <div className={styles.dropZone} onClick={() => fileInputRef.current?.click()}>
+              <div
+                className={styles.dropZone}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                style={dragOver ? {
+                  borderColor: 'rgba(0, 120, 212, 0.6)',
+                  backgroundColor: 'rgba(0, 120, 212, 0.08)',
+                } : undefined}
+              >
                 <div className={styles.dropZoneIcon}>
                   <ArrowUploadRegular fontSize={22} />
                 </div>
-                <div className={styles.dropZoneText}>Cliquez pour sélectionner un fichier</div>
+                <div className={styles.dropZoneText}>
+                  {dragOver ? 'Déposez le fichier ici' : 'Cliquez pour sélectionner un fichier'}
+                </div>
                 <div className={styles.dropZoneHint}>ou glissez-déposez ici</div>
               </div>
             )}

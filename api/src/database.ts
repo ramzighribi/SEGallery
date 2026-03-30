@@ -95,6 +95,11 @@ export async function deleteComponentById(id: string): Promise<void> {
   await table.deleteEntity('C', id);
 }
 
+export async function updateComponent(id: string, updates: Partial<Pick<ComponentEntity, 'title' | 'description' | 'file_name' | 'file_blob_url' | 'updated_at'>>): Promise<void> {
+  const table = getComponentsTable();
+  await table.updateEntity({ partitionKey: 'C', rowKey: id, ...updates }, 'Merge');
+}
+
 export async function incrementComponentField(id: string, field: 'view_count' | 'download_count'): Promise<number> {
   const table = getComponentsTable();
   const entity = await table.getEntity('C', id);
