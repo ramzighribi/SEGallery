@@ -104,7 +104,7 @@ export async function deleteComponent(id: string): Promise<void> {
 }
 
 export async function trackDownload(id: string): Promise<{ download_count: number }> {
-  const res = await fetch(`${API_BASE}/components/${encodeURIComponent(id)}/download`, {
+  const res = await fetch(`${API_BASE}/downloads/${encodeURIComponent(id)}`, {
     method: 'POST',
   });
   if (!res.ok) await throwApiError(res, 'Failed to track download');

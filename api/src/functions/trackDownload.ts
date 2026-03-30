@@ -6,7 +6,7 @@ let dbInitialized = false;
 app.http('trackDownload', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  route: 'components/{id}/download',
+  route: 'downloads/{id}',
   handler: async (req: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> => {
     try {
       if (!dbInitialized) { await initDatabase(); dbInitialized = true; }
