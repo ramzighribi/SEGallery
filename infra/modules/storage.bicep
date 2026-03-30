@@ -22,6 +22,19 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
 resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
   parent: storageAccount
   name: 'default'
+  properties: {
+    cors: {
+      corsRules: [
+        {
+          allowedOrigins: ['*']
+          allowedMethods: ['GET', 'PUT', 'POST']
+          allowedHeaders: ['*']
+          exposedHeaders: ['*']
+          maxAgeInSeconds: 3600
+        }
+      ]
+    }
+  }
 }
 
 resource filesContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
@@ -37,25 +50,6 @@ resource screenshotsContainer 'Microsoft.Storage/storageAccounts/blobServices/co
   name: 'screenshots'
   properties: {
     publicAccess: 'None'
-  }
-}
-
-// CORS rules for the frontend to upload directly
-resource corsRules 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
-  parent: storageAccount
-  name: 'default'
-  properties: {
-    cors: {
-      corsRules: [
-        {
-          allowedOrigins: ['*']
-          allowedMethods: ['GET', 'PUT', 'POST']
-          allowedHeaders: ['*']
-          exposedHeaders: ['*']
-          maxAgeInSeconds: 3600
-        }
-      ]
-    }
   }
 }
 

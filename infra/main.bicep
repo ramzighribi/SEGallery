@@ -6,17 +6,22 @@
 @description('Azure region for all resources')
 param location string = resourceGroup().location
 
+@description('Azure region for SQL (if restricted in primary region)')
+param sqlLocation string = 'francecentral'
+
 @description('Unique project suffix (lowercase, no dashes)')
 @minLength(3)
 @maxLength(12)
 param projectSuffix string
 
-@description('SQL admin username')
-param sqlAdminLogin string = 'segadmin'
+@description('SQL Azure AD admin login (UPN)')
+param sqlAadAdminLogin string = 'admin@D365DemoTSCE97303239.onmicrosoft.com'
 
-@description('SQL admin password')
-@secure()
-param sqlAdminPassword string
+@description('SQL Azure AD admin Object ID')
+param sqlAadAdminObjectId string = '9a71df8e-6d43-43f5-b73d-ad50cf4a6980'
+
+@description('Azure AD Tenant ID')
+param aadTenantId string = '8ee8670c-e771-4ac2-918d-e76e476c5ef8'
 
 param tags object = {
   project: 'SEGallery'
@@ -53,11 +58,12 @@ module storage 'modules/storage.bicep' = {
 module sql 'modules/sql.bicep' = {
   name: 'deploy-sql'
   params: {
-    location: location
+    location: sqlLocation
     sqlServerName: sqlServerName
     sqlDatabaseName: sqlDatabaseName
-    sqlAdminLogin: sqlAdminLogin
-    sqlAdminPassword: sqlAdminPassword
+    aadAdminLogin: sqlAadAdminLogin
+    aadAdminObjectId: sqlAadAdminObjectId
+    aadAdminTenantId: aadTenantId
     tags: tags
   }
 }

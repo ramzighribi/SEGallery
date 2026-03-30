@@ -1,16 +1,36 @@
 import sql from 'mssql';
+import { DefaultAzureCredential } from '@azure/identity';
 
 let pool: sql.ConnectionPool | null = null;
 
 export async function getPool(): Promise<sql.ConnectionPool> {
   if (pool && pool.connected) return pool;
 
-  const connectionString = process.env.SQL_CONNECTION_STRING;
-  if (!connectionString) {
-    throw new Error('SQL_CONNECTION_STRING environment variable is not set');
+  const server = process.env.SQL_SERVER;
+  const database = process.env.SQL_DATABASE;
+  if (!server || !database) {
+    throw new Error('SQL_SERVER and SQL_DATABASE environment variables must be set');
   }
 
-  pool = await sql.connect(connectionString);
+  const credential = new DefaultAzureCredential();
+  const tokenResponse = await credential.getToken('https://database.windows.net/.default');
+
+  const config: sql.config = {
+    server,
+    database,
+    options: {
+      encrypt: true,
+      trustServerCertificate: false,
+    },
+    authentication: {
+      type: 'azure-active-directory-access-token',
+      options: {
+        token: tokenResponse.token,
+      },
+    },
+  };
+
+  pool = await sql.connect(config);
   return pool;
 }
 
