@@ -12,6 +12,8 @@ import {
   ArrowRightRegular,
   ChevronLeftRegular,
   ChevronRightRegular,
+  ArrowSortDownRegular,
+  ArrowSortUpRegular,
 } from '@fluentui/react-icons';
 import ComponentCard from '../components/ComponentCard';
 import ErrorBar from '../components/ErrorBar';
@@ -24,12 +26,12 @@ const useStyles = makeStyles({
     marginBottom: '40px',
   },
   heroTitle: {
-    fontSize: '40px',
+    fontSize: '44px',
     fontWeight: '800',
     letterSpacing: '-0.03em',
     lineHeight: '1.1',
     color: tokens.colorNeutralForeground1,
-    marginBottom: '12px',
+    marginBottom: '14px',
   },
   heroGradient: {
     background: 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)',
@@ -93,6 +95,58 @@ const useStyles = makeStyles({
     fontSize: '14px',
     color: tokens.colorNeutralForeground3,
     fontWeight: '500',
+  },
+  sortRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  sortLabel: {
+    fontSize: '13px',
+    color: tokens.colorNeutralForeground3,
+    fontWeight: '500',
+    marginRight: '4px',
+  },
+  sortBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    ...shorthands.padding('6px', '14px'),
+    ...shorthands.borderRadius('10px'),
+    ...shorthands.border('1px', 'solid', 'rgba(0, 0, 0, 0.06)'),
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    color: tokens.colorNeutralForeground3,
+    fontSize: '13px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transitionDuration: '0.2s',
+    transitionProperty: 'all',
+    fontFamily: 'inherit',
+    ':hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderTopColor: 'rgba(0, 120, 212, 0.3)',
+      borderRightColor: 'rgba(0, 120, 212, 0.3)',
+      borderBottomColor: 'rgba(0, 120, 212, 0.3)',
+      borderLeftColor: 'rgba(0, 120, 212, 0.3)',
+    },
+  },
+  sortBtnActive: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    ...shorthands.padding('6px', '14px'),
+    ...shorthands.borderRadius('10px'),
+    ...shorthands.border('1px', 'solid', 'rgba(0, 120, 212, 0.3)'),
+    backgroundColor: 'rgba(0, 120, 212, 0.08)',
+    color: '#0078d4',
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    transitionDuration: '0.2s',
+    transitionProperty: 'all',
   },
   grid: {
     display: 'grid',
@@ -192,6 +246,7 @@ export default function GalleryPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<'desc' | 'asc'>('desc');
   const [data, setData] = useState<PaginatedResponse<ComponentSummary> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
@@ -208,7 +263,7 @@ export default function GalleryPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchComponents(debouncedSearch, page);
+      const result = await fetchComponents(debouncedSearch, page, 12, sort);
       setData(result);
     } catch (err) {
       console.error('Failed to load components:', err);
@@ -216,7 +271,7 @@ export default function GalleryPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, page]);
+  }, [debouncedSearch, page, sort]);
 
   useEffect(() => {
     loadData();
@@ -229,7 +284,7 @@ export default function GalleryPage() {
           Découvrez les <span className={styles.heroGradient}>composants</span>
         </h1>
         <p className={styles.heroSubtitle}>
-          Explorez et partagez les composants développés par les équipes SE
+          Explorez et partagez les composants développés par les équipes SE Dynamics 365
         </p>
         <div className={styles.searchWrapper}>
           <SearchRegular className={styles.searchIcon} fontSize={20} />
@@ -259,6 +314,23 @@ export default function GalleryPage() {
               {data.pagination.total} composant{data.pagination.total > 1 ? 's' : ''}
               {debouncedSearch ? ` pour « ${debouncedSearch} »` : ''}
             </Text>
+            <div className={styles.sortRow}>
+              <span className={styles.sortLabel}>Trier par date :</span>
+              <button
+                className={sort === 'desc' ? styles.sortBtnActive : styles.sortBtn}
+                onClick={() => { setSort('desc'); setPage(1); }}
+              >
+                <ArrowSortDownRegular fontSize={15} />
+                Récent
+              </button>
+              <button
+                className={sort === 'asc' ? styles.sortBtnActive : styles.sortBtn}
+                onClick={() => { setSort('asc'); setPage(1); }}
+              >
+                <ArrowSortUpRegular fontSize={15} />
+                Ancien
+              </button>
+            </div>
           </div>
 
           <div className={styles.grid}>

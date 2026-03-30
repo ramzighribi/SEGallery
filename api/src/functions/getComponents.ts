@@ -15,8 +15,9 @@ app.http('getComponents', {
       const search = req.query.get('search')?.trim() || '';
       const page = Math.max(1, parseInt(req.query.get('page') || '1'));
       const limit = Math.min(50, Math.max(1, parseInt(req.query.get('limit') || '12')));
+      const sort = req.query.get('sort') === 'asc' ? 'asc' : 'desc';
 
-      const { items, total } = await listComponents(search, page, limit);
+      const { items, total } = await listComponents(search, page, limit, sort);
 
       const result = [];
       for (const comp of items) {

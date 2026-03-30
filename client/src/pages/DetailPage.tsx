@@ -29,7 +29,7 @@ import {
   StarRegular,
   StarFilled,
 } from '@fluentui/react-icons';
-import { fetchComponentById, deleteComponent, trackDownload, rateComponent, ComponentDetail } from '../services/api';
+import { fetchComponentById, deleteComponent, trackDownload, rateComponent, formatAuthorName, ComponentDetail } from '../services/api';
 import { getAuthInfo, SwaUser } from '../services/auth';
 import ErrorBar from '../components/ErrorBar';
 
@@ -287,6 +287,101 @@ const useStyles = makeStyles({
     objectFit: 'cover' as const,
     display: 'block',
   },
+  carousel: {
+    position: 'relative' as const,
+    ...shorthands.borderRadius('16px'),
+    ...shorthands.overflow('hidden'),
+    ...shorthands.border('1px', 'solid', 'rgba(0, 0, 0, 0.06)'),
+    backgroundColor: '#f0f2f8',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+  },
+  carouselTrack: {
+    display: 'flex',
+    transitionDuration: '0.5s',
+    transitionProperty: 'transform',
+    transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  carouselSlide: {
+    minWidth: '100%',
+    cursor: 'pointer',
+  },
+  carouselImg: {
+    width: '100%',
+    height: '400px',
+    objectFit: 'contain' as const,
+    display: 'block',
+    backgroundColor: '#f8f9fc',
+  },
+  carouselNav: {
+    position: 'absolute' as const,
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: '40px',
+    height: '40px',
+    ...shorthands.borderRadius('50%'),
+    ...shorthands.border('0'),
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+    color: tokens.colorNeutralForeground1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    transitionDuration: '0.2s',
+    transitionProperty: 'all',
+    zIndex: 2,
+    ':hover': {
+      backgroundColor: 'white',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+      transform: 'translateY(-50%) scale(1.05)',
+    },
+  },
+  carouselDots: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '8px',
+    ...shorthands.padding('14px'),
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  },
+  dot: {
+    width: '8px',
+    height: '8px',
+    ...shorthands.borderRadius('50%'),
+    ...shorthands.border('0'),
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    cursor: 'pointer',
+    transitionDuration: '0.3s',
+    transitionProperty: 'all',
+    ...shorthands.padding('0'),
+    ':hover': {
+      backgroundColor: 'rgba(0, 120, 212, 0.4)',
+    },
+  },
+  dotActive: {
+    width: '24px',
+    height: '8px',
+    ...shorthands.borderRadius('4px'),
+    ...shorthands.border('0'),
+    backgroundColor: '#0078d4',
+    cursor: 'pointer',
+    transitionDuration: '0.3s',
+    transitionProperty: 'all',
+    ...shorthands.padding('0'),
+  },
+  carouselCounter: {
+    position: 'absolute' as const,
+    top: '12px',
+    right: '12px',
+    ...shorthands.padding('6px', '14px'),
+    ...shorthands.borderRadius('50px'),
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    color: 'white',
+    fontSize: '13px',
+    fontWeight: '600',
+    zIndex: 2,
+  },
   lightbox: {
     position: 'fixed' as const,
     top: 0,
@@ -425,6 +520,7 @@ export default function DetailPage() {
   const [userRating, setUserRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
   const [user, setUser] = useState<SwaUser | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -632,7 +728,7 @@ export default function DetailPage() {
               <div className={styles.metaIcon}>
                 <PersonRegular fontSize={14} />
               </div>
-              <Text weight="semibold">{component.author_name}</Text>
+              <Text weight="semibold">{formatAuthorName(component.author_name)}</Text>
             </div>
             <div className={styles.metaItem}>
               <div className={styles.metaIcon}>
@@ -683,13 +779,70 @@ export default function DetailPage() {
             <span className={styles.sectionTitle}>Screenshots</span>
             <span className={styles.sectionCount}>{component.screenshots.length}</span>
           </div>
-          <div className={styles.screenshotGrid}>
+
+          {/* Carousel */}
+          <div className={styles.carousel}>
+            <div className={styles.carouselCounter}>
+              {carouselIndex + 1} / {component.screenshots.length}
+            </div>
+            <div
+              className={styles.carouselTrack}
+              style={{ transform: `translateX(-${carouselIndex * 100}%)` }}
+            >
+              {component.screenshots.map((screenshot) => (
+                <div key={screenshot.id} className={styles.carouselSlide} onClick={() => setLightboxIndex(carouselIndex)}>
+                  <img
+                    src={screenshot.url}
+                    alt={screenshot.fileName}
+                    className={styles.carouselImg}
+                  />
+                </div>
+              ))}
+            </div>
+            {carouselIndex > 0 && (
+              <button
+                className={styles.carouselNav}
+                style={{ left: '12px' }}
+                onClick={() => setCarouselIndex(carouselIndex - 1)}
+              >
+                <ChevronLeftRegular fontSize={18} />
+              </button>
+            )}
+            {carouselIndex < component.screenshots.length - 1 && (
+              <button
+                className={styles.carouselNav}
+                style={{ right: '12px' }}
+                onClick={() => setCarouselIndex(carouselIndex + 1)}
+              >
+                <ChevronRightRegular fontSize={18} />
+              </button>
+            )}
+            {component.screenshots.length > 1 && (
+              <div className={styles.carouselDots}>
+                {component.screenshots.map((_, i) => (
+                  <button
+                    key={i}
+                    className={i === carouselIndex ? styles.dotActive : styles.dot}
+                    onClick={() => setCarouselIndex(i)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Thumbnail strip */}
+          <div className={styles.screenshotGrid} style={{ marginTop: '16px' }}>
             {component.screenshots.map((screenshot, index) => (
               <div
                 key={screenshot.id}
                 className={`${styles.screenshotItem} fade-in-up`}
-                style={{ animationDelay: `${index * 0.08}s`, animationFillMode: 'backwards' }}
-                onClick={() => setLightboxIndex(index)}
+                style={{
+                  animationDelay: `${index * 0.08}s`,
+                  animationFillMode: 'backwards',
+                  borderColor: index === carouselIndex ? 'rgba(0, 120, 212, 0.4)' : undefined,
+                  boxShadow: index === carouselIndex ? '0 4px 16px rgba(0, 120, 212, 0.15)' : undefined,
+                }}
+                onClick={() => setCarouselIndex(index)}
               >
                 <img
                   src={screenshot.url}

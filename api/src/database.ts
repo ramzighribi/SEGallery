@@ -104,7 +104,7 @@ export async function incrementComponentField(id: string, field: 'view_count' | 
   return updated;
 }
 
-export async function listComponents(search: string, page: number, limit: number): Promise<{ items: ComponentEntity[]; total: number }> {
+export async function listComponents(search: string, page: number, limit: number, sort: 'asc' | 'desc' = 'desc'): Promise<{ items: ComponentEntity[]; total: number }> {
   const table = getComponentsTable();
   const all: ComponentEntity[] = [];
 
@@ -122,8 +122,12 @@ export async function listComponents(search: string, page: number, limit: number
     all.push(entity as unknown as ComponentEntity);
   }
 
-  // Sort by created_at descending
-  all.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+  // Sort by created_at
+  if (sort === 'asc') {
+    all.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+  } else {
+    all.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+  }
 
   const total = all.length;
   const offset = (page - 1) * limit;

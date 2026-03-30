@@ -65,12 +65,27 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export function formatAuthorName(name: string): string {
+  if (!name) return 'Inconnu';
+  // If it looks like an email, extract and format the name part
+  if (name.includes('@')) {
+    const local = name.split('@')[0];
+    // Handle formats like firstname.lastname or firstnamelastname
+    return local
+      .split(/[._-]/)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return name;
+}
+
 export async function fetchComponents(
   search: string = '',
   page: number = 1,
-  limit: number = 12
+  limit: number = 12,
+  sort: 'desc' | 'asc' = 'desc'
 ): Promise<PaginatedResponse<ComponentSummary>> {
-  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  const params = new URLSearchParams({ page: String(page), limit: String(limit), sort });
   if (search) params.set('search', search);
 
   const res = await fetch(`${API_BASE}/components?${params}`);
