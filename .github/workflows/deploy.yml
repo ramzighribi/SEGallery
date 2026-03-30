@@ -38,16 +38,14 @@ jobs:
           npm run build
 
       # ── Deploy to Azure Static Web Apps ──
+      - name: Install SWA CLI
+        run: npm install -g @azure/static-web-apps-cli
+
       - name: Deploy to Azure Static Web Apps
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.SWA_DEPLOYMENT_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: upload
-          app_location: ./client/dist
-          api_location: ./api/build
-          skip_app_build: true
-          skip_api_build: true
-        env:
-          API_LANGUAGE: node
-          API_VERSION: "20"
+        run: |
+          swa deploy ./client/dist \
+            --api-location ./api/build \
+            --deployment-token ${{ secrets.SWA_DEPLOYMENT_TOKEN }} \
+            --env production \
+            --api-language node \
+            --api-version 20
