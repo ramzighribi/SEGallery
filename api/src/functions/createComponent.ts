@@ -148,7 +148,18 @@ app.http('createComponent', {
         jsonBody: { id: componentId, message: 'Component created successfully' },
       };
     } catch (err: any) {
-      return { status: 500, jsonBody: { error: 'Internal server error', details: err.message } };
+      const errorDetail = {
+        error: 'Internal server error',
+        message: err.message || String(err),
+        stack: err.stack || null,
+        code: err.code || null,
+        timestamp: new Date().toISOString(),
+        function: 'createComponent',
+        method: req.method,
+        url: req.url,
+      };
+      _context.error('[createComponent] UNHANDLED ERROR:', JSON.stringify(errorDetail, null, 2));
+      return { status: 500, jsonBody: errorDetail };
     }
   },
 });

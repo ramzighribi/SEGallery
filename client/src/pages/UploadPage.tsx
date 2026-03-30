@@ -8,9 +8,6 @@ import {
   Textarea,
   Button,
   Card,
-  MessageBar,
-  MessageBarBody,
-  MessageBarTitle,
   Spinner,
   Badge,
 } from '@fluentui/react-components';
@@ -23,6 +20,7 @@ import {
 } from '@fluentui/react-icons';
 import { createComponent } from '../services/api';
 import { getAuthInfo, loginUrl, SwaUser } from '../services/auth';
+import ErrorBar from '../components/ErrorBar';
 
 const useStyles = makeStyles({
   container: {
@@ -110,7 +108,7 @@ export default function UploadPage() {
   const [screenshots, setScreenshots] = useState<File[]>([]);
   const [screenshotPreviews, setScreenshotPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<unknown>(null);
   const [success, setSuccess] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -125,11 +123,11 @@ export default function UploadPage() {
     if (selected) {
       const ext = selected.name.split('.').pop()?.toLowerCase();
       if (!['zip', 'html', 'htm'].includes(ext || '')) {
-        setError('Seuls les fichiers .zip, .html ou .htm sont acceptés');
+        setError(new Error('Seuls les fichiers .zip, .html ou .htm sont acceptés'));
         return;
       }
       setFile(selected);
-      setError('');
+      setError(null);
     }
   };
 
@@ -138,14 +136,14 @@ export default function UploadPage() {
     const validImages = selected.filter((f) => f.type.startsWith('image/'));
 
     if (screenshots.length + validImages.length > 10) {
-      setError('Maximum 10 screenshots autorisés');
+      setError(new Error('Maximum 10 screenshots autorisés'));
       return;
     }
 
     const newPreviews = validImages.map((f) => URL.createObjectURL(f));
     setScreenshots((prev) => [...prev, ...validImages]);
     setScreenshotPreviews((prev) => [...prev, ...newPreviews]);
-    setError('');
+    setError(null);
   };
 
   const removeScreenshot = (index: number) => {
@@ -155,12 +153,12 @@ export default function UploadPage() {
   };
 
   const handleSubmit = async () => {
-    if (!title.trim()) { setError('Le titre est requis'); return; }
-    if (!description.trim()) { setError('La description est requise'); return; }
-    if (!file) { setError('Le fichier du composant est requis'); return; }
+    if (!title.trim()) { setError(new Error('Le titre est requis')); return; }
+    if (!description.trim()) { setError(new Error('La description est requise')); return; }
+    if (!file) { setError(new Error('Le fichier du composant est requis')); return; }
 
     setSubmitting(true);
-    setError('');
+    setError(null);
 
     try {
       const formData = new FormData();
@@ -173,7 +171,7 @@ export default function UploadPage() {
       setSuccess(true);
       setTimeout(() => navigate(`/component/${result.id}`), 1500);
     } catch (err: any) {
-      setError(err.message || 'Erreur lors de la publication');
+      setError(err);
     } finally {
       setSubmitting(false);
     }
@@ -215,14 +213,11 @@ export default function UploadPage() {
     <div className={styles.container}>
       <Text className={styles.title}>Publier un Composant</Text>
 
-      {error && (
-        <MessageBar intent="error" style={{ marginBottom: '16px' }}>
-          <MessageBarBody>
-            <MessageBarTitle>Erreur</MessageBarTitle>
-            {error}
-          </MessageBarBody>
-        </MessageBar>
-      )}
+      {error ? (
+        <div style={{ marginBottom: '16px' }}>
+          <ErrorBar error={error} fallbackMessage="Erreur lors de la publication" />
+        </div>
+      ) : null}
 
       <Card>
         <div className={styles.form}>

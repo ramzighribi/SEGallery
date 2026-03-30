@@ -43,7 +43,18 @@ app.http('getComponentById', {
         },
       };
     } catch (err: any) {
-      return { status: 500, jsonBody: { error: 'Internal server error', details: err.message } };
+      const errorDetail = {
+        error: 'Internal server error',
+        message: err.message || String(err),
+        stack: err.stack || null,
+        code: err.code || null,
+        timestamp: new Date().toISOString(),
+        function: 'getComponentById',
+        method: req.method,
+        url: req.url,
+      };
+      _context.error('[getComponentById] UNHANDLED ERROR:', JSON.stringify(errorDetail, null, 2));
+      return { status: 500, jsonBody: errorDetail };
     }
   },
 });

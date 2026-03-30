@@ -67,7 +67,18 @@ app.http('deleteComponent', {
 
       return { jsonBody: { message: 'Component deleted successfully' } };
     } catch (err: any) {
-      return { status: 500, jsonBody: { error: 'Internal server error', details: err.message } };
+      const errorDetail = {
+        error: 'Internal server error',
+        message: err.message || String(err),
+        stack: err.stack || null,
+        code: err.code || null,
+        timestamp: new Date().toISOString(),
+        function: 'deleteComponent',
+        method: req.method,
+        url: req.url,
+      };
+      _context.error('[deleteComponent] UNHANDLED ERROR:', JSON.stringify(errorDetail, null, 2));
+      return { status: 500, jsonBody: errorDetail };
     }
   },
 });

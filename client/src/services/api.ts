@@ -1,5 +1,40 @@
 const API_BASE = '/api';
 
+export interface ApiErrorDetail {
+  error: string;
+  message: string;
+  stack?: string;
+  code?: string;
+  timestamp?: string;
+  function?: string;
+  method?: string;
+  url?: string;
+  status?: number;
+}
+
+export class ApiError extends Error {
+  detail: ApiErrorDetail;
+  constructor(detail: ApiErrorDetail) {
+    super(detail.message || detail.error);
+    this.detail = detail;
+  }
+}
+
+async function throwApiError(res: Response, fallbackMsg: string): Promise<never> {
+  let detail: ApiErrorDetail;
+  try {
+    const body = await res.json();
+    detail = { ...body, status: res.status };
+  } catch {
+    detail = {
+      error: fallbackMsg,
+      message: `HTTP ${res.status} ${res.statusText}`,
+      status: res.status,
+    };
+  }
+  throw new ApiError(detail);
+}
+
 export interface ComponentSummary {
   id: string;
   title: string;
@@ -36,13 +71,13 @@ export async function fetchComponents(
   if (search) params.set('search', search);
 
   const res = await fetch(`${API_BASE}/components?${params}`);
-  if (!res.ok) throw new Error('Failed to fetch components');
+  if (!res.ok) await throwApiError(res, 'Failed to fetch components');
   return res.json();
 }
 
 export async function fetchComponentById(id: string): Promise<ComponentDetail> {
   const res = await fetch(`${API_BASE}/components/${encodeURIComponent(id)}`);
-  if (!res.ok) throw new Error('Component not found');
+  if (!res.ok) await throwApiError(res, 'Component not found');
   return res.json();
 }
 
@@ -52,8 +87,7 @@ export async function createComponent(formData: FormData): Promise<{ id: string 
     body: formData,
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Upload failed' }));
-    throw new Error(err.error || 'Upload failed');
+    await throwApiError(res, 'Upload failed');
   }
   return res.json();
 }
@@ -63,7 +97,6 @@ export async function deleteComponent(id: string): Promise<void> {
     method: 'DELETE',
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Delete failed' }));
-    throw new Error(err.error || 'Delete failed');
+    await throwApiError(res, 'Delete failed');
   }
 }

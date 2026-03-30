@@ -29,6 +29,7 @@ import {
 } from '@fluentui/react-icons';
 import { fetchComponentById, deleteComponent, ComponentDetail } from '../services/api';
 import { getAuthInfo, SwaUser } from '../services/auth';
+import ErrorBar from '../components/ErrorBar';
 
 const useStyles = makeStyles({
   container: {
@@ -153,6 +154,7 @@ export default function DetailPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [user, setUser] = useState<SwaUser | null>(null);
+  const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
     getAuthInfo().then((info) => setUser(info.clientPrincipal));
@@ -165,7 +167,10 @@ export default function DetailPage() {
     setLoading(true);
     fetchComponentById(id)
       .then(setComponent)
-      .catch(() => setComponent(null))
+      .catch((err) => {
+        setError(err);
+        setComponent(null);
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -177,6 +182,7 @@ export default function DetailPage() {
       navigate('/');
     } catch (err) {
       console.error(err);
+      setError(err);
       setDeleting(false);
     }
   };
@@ -192,6 +198,11 @@ export default function DetailPage() {
   if (!component) {
     return (
       <div className={styles.notFound}>
+        {error ? (
+          <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+            <ErrorBar error={error} fallbackMessage="Impossible de charger le composant" />
+          </div>
+        ) : null}
         <Text size={600}>Composant non trouvé</Text>
         <br /><br />
         <Button appearance="primary" onClick={() => navigate('/')}>
@@ -219,6 +230,11 @@ export default function DetailPage() {
       </Button>
 
       <Card>
+        {error ? (
+          <div style={{ padding: '16px 16px 0' }}>
+            <ErrorBar error={error} fallbackMessage="Une erreur est survenue" />
+          </div>
+        ) : null}
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <Text className={styles.title}>{component.title}</Text>

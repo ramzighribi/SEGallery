@@ -9,6 +9,7 @@ import {
 } from '@fluentui/react-components';
 import { SearchRegular, ArrowLeftRegular, ArrowRightRegular } from '@fluentui/react-icons';
 import ComponentCard from '../components/ComponentCard';
+import ErrorBar from '../components/ErrorBar';
 import { fetchComponents, ComponentSummary, PaginatedResponse } from '../services/api';
 
 const useStyles = makeStyles({
@@ -69,6 +70,7 @@ export default function GalleryPage() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<ComponentSummary> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -80,11 +82,13 @@ export default function GalleryPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const result = await fetchComponents(debouncedSearch, page);
       setData(result);
     } catch (err) {
       console.error('Failed to load components:', err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -112,6 +116,12 @@ export default function GalleryPage() {
           />
         </div>
       </div>
+
+      {error ? (
+        <div style={{ marginBottom: '16px' }}>
+          <ErrorBar error={error} fallbackMessage="Impossible de charger les composants" />
+        </div>
+      ) : null}
 
       {loading ? (
         <div className={styles.spinner}>
