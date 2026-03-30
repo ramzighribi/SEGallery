@@ -10,6 +10,7 @@ import {
   ArrowDownloadRegular,
   PersonRegular,
   CalendarRegular,
+  StarFilled,
 } from '@fluentui/react-icons';
 import type { ComponentSummary } from '../services/api';
 
@@ -188,6 +189,12 @@ export default function ComponentCard({ component }: Props) {
             <ArrowDownloadRegular fontSize={13} />
             {formatCount(component.download_count || 0)}
           </div>
+          {(component.rating_count || 0) > 0 && (
+            <div className={styles.statPill}>
+              <StarFilled fontSize={13} style={{ color: '#ffb900' }} />
+              {(component.average_rating || 0).toFixed(1)}
+            </div>
+          )}
         </div>
       </div>
 

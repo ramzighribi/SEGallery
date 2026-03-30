@@ -4,6 +4,7 @@ import { DefaultAzureCredential } from '@azure/identity';
 // Table names
 const COMPONENTS_TABLE = 'Components';
 const SCREENSHOTS_TABLE = 'Screenshots';
+const RATINGS_TABLE = 'Ratings';
 
 let tablesInitialized = false;
 
@@ -23,12 +24,17 @@ export function getScreenshotsTable(): TableClient {
   return new TableClient(getTableUrl(), SCREENSHOTS_TABLE, credential);
 }
 
+export function getRatingsTable(): TableClient {
+  return new TableClient(getTableUrl(), RATINGS_TABLE, credential);
+}
+
 export async function initDatabase(): Promise<void> {
   if (tablesInitialized) return;
   const svc = new TableServiceClient(getTableUrl(), credential);
   // createTable is idempotent (409 if exists is ignored)
   await svc.createTable(COMPONENTS_TABLE).catch(() => {});
   await svc.createTable(SCREENSHOTS_TABLE).catch(() => {});
+  await svc.createTable(RATINGS_TABLE).catch(() => {});
   tablesInitialized = true;
 }
 
@@ -48,6 +54,15 @@ export interface ComponentEntity {
   updated_at: string;
   view_count: number;
   download_count: number;
+  rating_sum: number;
+  rating_count: number;
+}
+
+export interface RatingEntity {
+  partitionKey: string;   // component id
+  rowKey: string;         // user id
+  rating: number;         // 1-5
+  created_at: string;
 }
 
 export interface ScreenshotEntity {
@@ -151,4 +166,64 @@ export async function deleteScreenshotsByComponentId(componentId: string): Promi
     await table.deleteEntity(componentId, ss.rowKey);
   }
   return screenshots;
+}
+
+// --- Rating helpers ---
+
+export async function upsertRating(componentId: string, userId: string, rating: number): Promise<{ average_rating: number; rating_count: number }> {
+  const ratingsTable = getRatingsTable();
+  const componentsTable = getComponentsTable();
+
+  // Get component current rating data
+  const component = await componentsTable.getEntity('C', componentId);
+  let currentSum = (component.rating_sum as number) || 0;
+  let currentCount = (component.rating_count as number) || 0;
+
+  // Check if user already rated
+  let existingRating: number | null = null;
+  try {
+    const existing = await ratingsTable.getEntity(componentId, userId);
+    existingRating = existing.rating as number;
+  } catch (e: any) {
+    if (e.statusCode !== 404) throw e;
+  }
+
+  if (existingRating !== null) {
+    // Update: adjust sum
+    currentSum = currentSum - existingRating + rating;
+  } else {
+    // New rating
+    currentSum += rating;
+    currentCount += 1;
+  }
+
+  // Upsert the rating record
+  await ratingsTable.upsertEntity({
+    partitionKey: componentId,
+    rowKey: userId,
+    rating,
+    created_at: new Date().toISOString(),
+  }, 'Replace');
+
+  // Update component aggregates
+  await componentsTable.updateEntity({
+    partitionKey: 'C',
+    rowKey: componentId,
+    rating_sum: currentSum,
+    rating_count: currentCount,
+  }, 'Merge');
+
+  const average_rating = currentCount > 0 ? currentSum / currentCount : 0;
+  return { average_rating, rating_count: currentCount };
+}
+
+export async function getUserRating(componentId: string, userId: string): Promise<number | null> {
+  const table = getRatingsTable();
+  try {
+    const entity = await table.getEntity(componentId, userId);
+    return entity.rating as number;
+  } catch (e: any) {
+    if (e.statusCode === 404) return null;
+    throw e;
+  }
 }

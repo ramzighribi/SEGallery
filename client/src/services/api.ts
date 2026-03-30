@@ -40,11 +40,12 @@ export interface ComponentSummary {
   title: string;
   description: string;
   author_name: string;
-  author_email: string;
   created_at: string;
   thumbnail: string | null;
   view_count: number;
   download_count: number;
+  average_rating: number;
+  rating_count: number;
 }
 
 export interface ComponentDetail extends ComponentSummary {
@@ -108,5 +109,15 @@ export async function trackDownload(id: string): Promise<{ download_count: numbe
     method: 'POST',
   });
   if (!res.ok) await throwApiError(res, 'Failed to track download');
+  return res.json();
+}
+
+export async function rateComponent(id: string, rating: number): Promise<{ average_rating: number; rating_count: number }> {
+  const res = await fetch(`${API_BASE}/ratings/${encodeURIComponent(id)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rating }),
+  });
+  if (!res.ok) await throwApiError(res, 'Failed to rate component');
   return res.json();
 }

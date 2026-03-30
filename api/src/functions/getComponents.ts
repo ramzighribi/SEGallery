@@ -28,11 +28,12 @@ app.http('getComponents', {
           description: comp.description,
           file_name: comp.file_name,
           author_name: comp.author_name,
-          author_email: comp.author_email,
           author_id: comp.author_id,
           created_at: comp.created_at,
           view_count: comp.view_count || 0,
           download_count: comp.download_count || 0,
+          average_rating: (comp.rating_count || 0) > 0 ? (comp.rating_sum || 0) / (comp.rating_count || 0) : 0,
+          rating_count: comp.rating_count || 0,
           thumbnail: thumbnail ? await generateReadSasUrl(thumbnail.blob_url) : null,
         });
       }

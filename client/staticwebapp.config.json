@@ -20,6 +20,11 @@
       "allowedRoles": ["anonymous"]
     },
     {
+      "route": "/api/ratings/*",
+      "methods": ["POST"],
+      "allowedRoles": ["authenticated"]
+    },
+    {
       "route": "/api/*",
       "allowedRoles": ["authenticated"]
     },

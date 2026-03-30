@@ -19,7 +19,6 @@ import {
   ArrowDownloadRegular,
   DeleteRegular,
   ArrowLeftRegular,
-  MailRegular,
   PersonRegular,
   CalendarRegular,
   DocumentRegular,
@@ -27,8 +26,10 @@ import {
   EyeRegular,
   ChevronLeftRegular,
   ChevronRightRegular,
+  StarRegular,
+  StarFilled,
 } from '@fluentui/react-icons';
-import { fetchComponentById, deleteComponent, trackDownload, ComponentDetail } from '../services/api';
+import { fetchComponentById, deleteComponent, trackDownload, rateComponent, ComponentDetail } from '../services/api';
 import { getAuthInfo, SwaUser } from '../services/auth';
 import ErrorBar from '../components/ErrorBar';
 
@@ -126,6 +127,9 @@ const useStyles = makeStyles({
   },
   statIconDownloads: {
     background: 'linear-gradient(135deg, #50e6ff 0%, #d13438 100%)',
+  },
+  statIconRating: {
+    background: 'linear-gradient(135deg, #ffb900 0%, #ff8c00 100%)',
   },
   statInfo: {
     display: 'flex',
@@ -345,6 +349,42 @@ const useStyles = makeStyles({
       backgroundColor: 'rgba(255, 255, 255, 0.25)',
     },
   },
+  ratingSection: {
+    marginTop: '24px',
+    ...shorthands.padding('20px', '0', '0'),
+    borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+  },
+  ratingLabel: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: tokens.colorNeutralForeground1,
+    marginBottom: '10px',
+    display: 'block',
+  },
+  starsRow: {
+    display: 'flex',
+    gap: '4px',
+    alignItems: 'center',
+  },
+  starBtn: {
+    ...shorthands.border('0'),
+    ...shorthands.padding('2px'),
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transitionDuration: '0.15s',
+    transitionProperty: 'transform',
+    ':hover': {
+      transform: 'scale(1.2)',
+    },
+  },
+  ratingInfo: {
+    marginLeft: '12px',
+    fontSize: '13px',
+    color: tokens.colorNeutralForeground3,
+  },
   spinner: {
     display: 'flex',
     justifyContent: 'center',
@@ -379,6 +419,10 @@ export default function DetailPage() {
 
   const [component, setComponent] = useState<ComponentDetail | null>(null);
   const [downloadCount, setDownloadCount] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+  const [ratingCount, setRatingCount] = useState(0);
+  const [hoverStar, setHoverStar] = useState(0);
+  const [userRating, setUserRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -398,6 +442,8 @@ export default function DetailPage() {
       .then((c) => {
         setComponent(c);
         setDownloadCount(c.download_count || 0);
+        setAverageRating(c.average_rating || 0);
+        setRatingCount(c.rating_count || 0);
       })
       .catch((err) => {
         setError(err);
@@ -414,7 +460,34 @@ export default function DetailPage() {
     } catch {
       // download tracking is best-effort
     }
-    window.open(component.fileUrl, '_blank');
+    // Force file download instead of opening in browser
+    try {
+      const response = await fetch(component.fileUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = component.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // Fallback: open in new tab
+      window.open(component.fileUrl, '_blank');
+    }
+  };
+
+  const handleRate = async (rating: number) => {
+    if (!id || !user) return;
+    setUserRating(rating);
+    try {
+      const result = await rateComponent(id, rating);
+      setAverageRating(result.average_rating);
+      setRatingCount(result.rating_count);
+    } catch (err) {
+      setError(err);
+    }
   };
 
   const handleDelete = async () => {
@@ -508,6 +581,15 @@ export default function DetailPage() {
                     <span className={styles.statLabel}>Téléchargements</span>
                   </div>
                 </div>
+                <div className={styles.statCard}>
+                  <div className={`${styles.statIcon} ${styles.statIconRating}`}>
+                    <StarFilled fontSize={18} />
+                  </div>
+                  <div className={styles.statInfo}>
+                    <span className={styles.statValue}>{averageRating > 0 ? averageRating.toFixed(1) : '—'}</span>
+                    <span className={styles.statLabel}>{ratingCount} avis</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -552,10 +634,6 @@ export default function DetailPage() {
               </div>
               <Text weight="semibold">{component.author_name}</Text>
             </div>
-            <a href={`mailto:${component.author_email}`} className={styles.contactLink}>
-              <MailRegular fontSize={14} />
-              Contacter
-            </a>
             <div className={styles.metaItem}>
               <div className={styles.metaIcon}>
                 <CalendarRegular fontSize={14} />
@@ -569,6 +647,33 @@ export default function DetailPage() {
               {component.file_name}
             </div>
           </div>
+
+          {user && (
+            <div className={styles.ratingSection}>
+              <span className={styles.ratingLabel}>Votre note</span>
+              <div className={styles.starsRow}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    className={styles.starBtn}
+                    onMouseEnter={() => setHoverStar(star)}
+                    onMouseLeave={() => setHoverStar(0)}
+                    onClick={() => handleRate(star)}
+                    title={`${star}/5`}
+                  >
+                    {star <= (hoverStar || userRating) ? (
+                      <StarFilled fontSize={28} style={{ color: '#ffb900' }} />
+                    ) : (
+                      <StarRegular fontSize={28} style={{ color: '#c8c6c4' }} />
+                    )}
+                  </button>
+                ))}
+                <span className={styles.ratingInfo}>
+                  {userRating > 0 ? `Vous avez noté ${userRating}/5` : 'Cliquez pour noter'}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

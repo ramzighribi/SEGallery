@@ -99,6 +99,8 @@ app.http('createComponent', {
         updated_at: now,
         view_count: 0,
         download_count: 0,
+        rating_sum: 0,
+        rating_count: 0,
       });
 
       // Upload and insert screenshots
