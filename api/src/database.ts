@@ -1,7 +1,37 @@
 import sql from 'mssql';
-import { DefaultAzureCredential } from '@azure/identity';
 
 let pool: sql.ConnectionPool | null = null;
+
+async function getAccessToken(): Promise<string> {
+  const endpoint = process.env.IDENTITY_ENDPOINT;
+  const header = process.env.IDENTITY_HEADER;
+
+  if (!endpoint || !header) {
+    throw new Error(
+      'Managed identity not available: IDENTITY_ENDPOINT and IDENTITY_HEADER env vars are missing. ' +
+      `IDENTITY_ENDPOINT=${endpoint ?? 'undefined'}, IDENTITY_HEADER=${header ? '[set]' : 'undefined'}`
+    );
+  }
+
+  const resource = 'https://database.windows.net';
+  const url = `${endpoint}?resource=${encodeURIComponent(resource)}&api-version=2019-08-01`;
+
+  const response = await fetch(url, {
+    headers: { 'X-IDENTITY-HEADER': header },
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`MSI token request failed (${response.status}): ${body}`);
+  }
+
+  const tokenResponse = await response.json() as { access_token: string };
+  if (!tokenResponse.access_token) {
+    throw new Error(`MSI token response missing access_token: ${JSON.stringify(tokenResponse)}`);
+  }
+
+  return tokenResponse.access_token;
+}
 
 export async function getPool(): Promise<sql.ConnectionPool> {
   if (pool && pool.connected) return pool;
@@ -12,8 +42,7 @@ export async function getPool(): Promise<sql.ConnectionPool> {
     throw new Error('SQL_SERVER and SQL_DATABASE environment variables must be set');
   }
 
-  const credential = new DefaultAzureCredential();
-  const tokenResponse = await credential.getToken('https://database.windows.net/.default');
+  const token = await getAccessToken();
 
   const config: sql.config = {
     server,
@@ -25,7 +54,7 @@ export async function getPool(): Promise<sql.ConnectionPool> {
     authentication: {
       type: 'azure-active-directory-access-token',
       options: {
-        token: tokenResponse.token,
+        token,
       },
     },
   };
