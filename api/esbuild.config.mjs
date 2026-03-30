@@ -26,7 +26,7 @@ await esbuild.build({
   outdir: join(outDir, 'functions'),
   format: 'cjs',
   external: ['@azure/functions-core'],
-  minify: false,
+  minify: true,
   sourcemap: false,
 });
 
@@ -41,3 +41,10 @@ writeFileSync(join(outDir, 'package.json'), JSON.stringify({
   main: 'functions/*.js',
   scripts: { build: 'echo build done' }
 }, null, 2));
+
+// Create .oryx_manifest for SWA deploy with skip_api_build
+writeFileSync(join(outDir, '.oryx_manifest'), [
+  'NodeVersion="20"',
+  'Framework="NODEJS"',
+  'CompressedDestinationDir="/bin/staticsites/ss-oryx-api"',
+].join('\n'));
