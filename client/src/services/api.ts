@@ -43,6 +43,8 @@ export interface ComponentSummary {
   author_email: string;
   created_at: string;
   thumbnail: string | null;
+  view_count: number;
+  download_count: number;
 }
 
 export interface ComponentDetail extends ComponentSummary {
@@ -99,4 +101,12 @@ export async function deleteComponent(id: string): Promise<void> {
   if (!res.ok) {
     await throwApiError(res, 'Delete failed');
   }
+}
+
+export async function trackDownload(id: string): Promise<{ download_count: number }> {
+  const res = await fetch(`${API_BASE}/components/${encodeURIComponent(id)}/download`, {
+    method: 'POST',
+  });
+  if (!res.ok) await throwApiError(res, 'Failed to track download');
+  return res.json();
 }

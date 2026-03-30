@@ -46,6 +46,8 @@ export interface ComponentEntity {
   author_id: string;
   created_at: string;     // ISO string
   updated_at: string;
+  view_count: number;
+  download_count: number;
 }
 
 export interface ScreenshotEntity {
@@ -76,6 +78,15 @@ export async function getComponentById(id: string): Promise<ComponentEntity | nu
 export async function deleteComponentById(id: string): Promise<void> {
   const table = getComponentsTable();
   await table.deleteEntity('C', id);
+}
+
+export async function incrementComponentField(id: string, field: 'view_count' | 'download_count'): Promise<number> {
+  const table = getComponentsTable();
+  const entity = await table.getEntity('C', id);
+  const current = (entity[field] as number) || 0;
+  const updated = current + 1;
+  await table.updateEntity({ partitionKey: 'C', rowKey: id, [field]: updated }, 'Merge');
+  return updated;
 }
 
 export async function listComponents(search: string, page: number, limit: number): Promise<{ items: ComponentEntity[]; total: number }> {

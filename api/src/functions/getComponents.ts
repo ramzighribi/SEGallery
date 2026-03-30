@@ -31,6 +31,8 @@ app.http('getComponents', {
           author_email: comp.author_email,
           author_id: comp.author_id,
           created_at: comp.created_at,
+          view_count: comp.view_count || 0,
+          download_count: comp.download_count || 0,
           thumbnail: thumbnail ? await generateReadSasUrl(thumbnail.blob_url) : null,
         });
       }

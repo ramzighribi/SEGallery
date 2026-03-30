@@ -1,5 +1,5 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { initDatabase, getComponentById, getScreenshotsByComponentId } from '../database.js';
+import { initDatabase, getComponentById, getScreenshotsByComponentId, incrementComponentField } from '../database.js';
 import { generateReadSasUrl } from '../storage.js';
 
 let dbInitialized = false;
@@ -17,6 +17,9 @@ app.http('getComponentById', {
       if (!component) {
         return { status: 404, jsonBody: { error: 'Component not found' } };
       }
+
+      // Increment view count
+      const viewCount = await incrementComponentField(id!, 'view_count');
 
       const screenshots = await getScreenshotsByComponentId(id!);
 
@@ -41,6 +44,8 @@ app.http('getComponentById', {
           author_id: component.author_id,
           created_at: component.created_at,
           updated_at: component.updated_at,
+          view_count: viewCount,
+          download_count: component.download_count || 0,
           fileUrl: await generateReadSasUrl(component.file_blob_url),
           screenshots: screenshotResults,
         },

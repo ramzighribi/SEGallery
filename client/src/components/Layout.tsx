@@ -3,11 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   makeStyles,
   tokens,
-  Button,
   Text,
   Avatar,
   Tooltip,
-  Divider,
+  shorthands,
 } from '@fluentui/react-components';
 import {
   GridRegular,
@@ -22,17 +21,18 @@ const useStyles = makeStyles({
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: tokens.colorNeutralBackground2,
   },
   header: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0 24px',
-    height: '56px',
-    backgroundColor: tokens.colorBrandBackground,
-    color: tokens.colorNeutralForegroundOnBrand,
-    boxShadow: tokens.shadow4,
+    ...shorthands.padding('0', '32px'),
+    height: '64px',
+    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.5)',
+    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.04)',
     position: 'sticky' as const,
     top: 0,
     zIndex: 1000,
@@ -40,32 +40,140 @@ const useStyles = makeStyles({
   headerLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '16px',
+    gap: '6px',
     cursor: 'pointer',
+    userSelect: 'none',
   },
-  logo: {
+  logoIcon: {
+    width: '32px',
+    height: '32px',
+    ...shorthands.borderRadius('10px'),
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'white',
+    fontSize: '16px',
     fontWeight: tokens.fontWeightBold,
-    fontSize: tokens.fontSizeBase500,
+    flexShrink: 0,
+  },
+  logoText: {
+    fontWeight: '700',
+    fontSize: '18px',
+    letterSpacing: '-0.02em',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
   },
   nav: {
     display: 'flex',
-    gap: '8px',
+    gap: '4px',
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    ...shorthands.borderRadius('12px'),
+    ...shorthands.padding('4px'),
   },
-  navButton: {
-    color: tokens.colorNeutralForegroundOnBrand,
+  navItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    ...shorthands.padding('8px', '16px'),
+    ...shorthands.borderRadius('10px'),
+    fontSize: '14px',
+    fontWeight: '500',
+    color: tokens.colorNeutralForeground3,
+    cursor: 'pointer',
+    transitionDuration: '0.2s',
+    transitionProperty: 'all',
+    ...shorthands.border('0'),
+    backgroundColor: 'transparent',
+    ':hover': {
+      color: tokens.colorNeutralForeground1,
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    },
+  },
+  navItemActive: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    ...shorthands.padding('8px', '16px'),
+    ...shorthands.borderRadius('10px'),
+    fontSize: '14px',
+    fontWeight: '600',
+    color: 'white',
+    cursor: 'pointer',
+    ...shorthands.border('0'),
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
   },
   headerRight: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
   },
+  userPill: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    ...shorthands.padding('6px', '12px', '6px', '6px'),
+    ...shorthands.borderRadius('50px'),
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    transitionDuration: '0.2s',
+    transitionProperty: 'background-color',
+    ':hover': {
+      backgroundColor: 'rgba(0, 0, 0, 0.06)',
+    },
+  },
+  userName: {
+    fontSize: '13px',
+    fontWeight: '500',
+    color: tokens.colorNeutralForeground2,
+  },
+  logoutBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '32px',
+    height: '32px',
+    ...shorthands.borderRadius('50%'),
+    ...shorthands.border('0'),
+    backgroundColor: 'transparent',
+    color: tokens.colorNeutralForeground3,
+    cursor: 'pointer',
+    transitionDuration: '0.2s',
+    transitionProperty: 'all',
+    ':hover': {
+      backgroundColor: 'rgba(245, 87, 108, 0.1)',
+      color: '#f5576c',
+    },
+  },
+  loginBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    ...shorthands.padding('8px', '20px'),
+    ...shorthands.borderRadius('50px'),
+    ...shorthands.border('0'),
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: 'white',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transitionDuration: '0.2s',
+    transitionProperty: 'all',
+    textDecoration: 'none',
+    boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+    ':hover': {
+      boxShadow: '0 4px 16px rgba(102, 126, 234, 0.4)',
+      transform: 'translateY(-1px)',
+    },
+  },
   content: {
     flex: 1,
-    padding: '24px',
+    ...shorthands.padding('32px'),
     maxWidth: '1400px',
     width: '100%',
-    margin: '0 auto',
-    boxSizing: 'border-box' as const,
+    ...shorthands.margin('0', 'auto'),
   },
 });
 
@@ -83,67 +191,48 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className={styles.root}>
       <header className={styles.header}>
         <div className={styles.headerLeft} onClick={() => navigate('/')}>
-          <Text className={styles.logo} style={{ color: 'white' }}>
-            📦 SEGallery
-          </Text>
+          <div className={styles.logoIcon}>SE</div>
+          <span className={styles.logoText}>Gallery</span>
         </div>
 
         <nav className={styles.nav}>
-          <Button
-            appearance="subtle"
-            icon={<GridRegular />}
-            className={styles.navButton}
+          <button
+            className={location.pathname === '/' ? styles.navItemActive : styles.navItem}
             onClick={() => navigate('/')}
-            style={location.pathname === '/' ? { backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' } : { color: 'white' }}
           >
+            <GridRegular fontSize={16} />
             Galerie
-          </Button>
-          <Button
-            appearance="subtle"
-            icon={<ArrowUploadRegular />}
-            className={styles.navButton}
+          </button>
+          <button
+            className={location.pathname === '/upload' ? styles.navItemActive : styles.navItem}
             onClick={() => navigate('/upload')}
-            style={location.pathname === '/upload' ? { backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' } : { color: 'white' }}
           >
+            <ArrowUploadRegular fontSize={16} />
             Publier
-          </Button>
+          </button>
         </nav>
 
         <div className={styles.headerRight}>
           {user ? (
-            <>
-              <Tooltip content={getUserDisplayName(user)} relationship="label">
-                <Avatar name={getUserDisplayName(user)} size={32} color="brand" />
-              </Tooltip>
-              <Text style={{ color: 'white', fontSize: '13px' }}>
-                {getUserDisplayName(user)}
-              </Text>
+            <div className={styles.userPill}>
+              <Avatar name={getUserDisplayName(user)} size={28} color="colorful" />
+              <Text className={styles.userName}>{getUserDisplayName(user)}</Text>
               <Tooltip content="Se déconnecter" relationship="label">
                 <a href={logoutUrl()} style={{ display: 'flex' }}>
-                  <Button
-                    appearance="subtle"
-                    icon={<SignOutRegular />}
-                    style={{ color: 'white' }}
-                    size="small"
-                  />
+                  <button className={styles.logoutBtn}>
+                    <SignOutRegular fontSize={16} />
+                  </button>
                 </a>
               </Tooltip>
-            </>
+            </div>
           ) : (
-            <a href={loginUrl()} style={{ textDecoration: 'none' }}>
-              <Button
-                appearance="subtle"
-                icon={<PersonRegular />}
-                style={{ color: 'white' }}
-              >
-                Se connecter
-              </Button>
+            <a href={loginUrl()} className={styles.loginBtn}>
+              <PersonRegular fontSize={16} />
+              Se connecter
             </a>
           )}
         </div>
       </header>
-
-      <Divider />
 
       <main className={styles.content}>{children}</main>
     </div>

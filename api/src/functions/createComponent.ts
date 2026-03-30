@@ -97,6 +97,8 @@ app.http('createComponent', {
         author_id: user.userId,
         created_at: now,
         updated_at: now,
+        view_count: 0,
+        download_count: 0,
       });
 
       // Upload and insert screenshots

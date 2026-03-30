@@ -15,6 +15,11 @@
       "allowedRoles": ["anonymous"]
     },
     {
+      "route": "/api/components/*/download",
+      "methods": ["POST"],
+      "allowedRoles": ["anonymous"]
+    },
+    {
       "route": "/api/*",
       "allowedRoles": ["authenticated"]
     },
