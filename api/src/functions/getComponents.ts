@@ -1,10 +1,9 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { getPool, initDatabase } from '../database.js';
+import { initDatabase, listComponents, getScreenshotsByComponentId } from '../database.js';
 import { generateReadSasUrl } from '../storage.js';
 
 let dbInitialized = false;
 
-// GET /api/components?search=&page=&limit=
 app.http('getComponents', {
   methods: ['GET'],
   authLevel: 'anonymous',
@@ -12,55 +11,26 @@ app.http('getComponents', {
   handler: async (req: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> => {
     try {
       if (!dbInitialized) { await initDatabase(); dbInitialized = true; }
-      const pool = await getPool();
 
       const search = req.query.get('search')?.trim() || '';
       const page = Math.max(1, parseInt(req.query.get('page') || '1'));
       const limit = Math.min(50, Math.max(1, parseInt(req.query.get('limit') || '12')));
-      const offset = (page - 1) * limit;
 
-      let countQuery: string;
-      let dataQuery: string;
-      const request = pool.request();
+      const { items, total } = await listComponents(search, page, limit);
 
-      if (search) {
-        const searchPattern = `%${search}%`;
-        request.input('search', searchPattern);
-        request.input('limit', limit);
-        request.input('offset', offset);
-
-        countQuery = `SELECT COUNT(*) as total FROM Components WHERE title LIKE @search OR description LIKE @search OR author_name LIKE @search`;
-        dataQuery = `SELECT * FROM Components WHERE title LIKE @search OR description LIKE @search OR author_name LIKE @search ORDER BY created_at DESC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
-      } else {
-        request.input('limit', limit);
-        request.input('offset', offset);
-
-        countQuery = `SELECT COUNT(*) as total FROM Components`;
-        dataQuery = `SELECT * FROM Components ORDER BY created_at DESC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
-      }
-
-      const countResult = await pool.request()
-        .input('search', `%${search}%`)
-        .query(countQuery);
-      const total = countResult.recordset[0].total;
-
-      const dataReq = pool.request()
-        .input('limit', limit)
-        .input('offset', offset);
-      if (search) dataReq.input('search', `%${search}%`);
-      const dataResult = await dataReq.query(dataQuery);
-      const components = dataResult.recordset;
-
-      // Fetch first screenshot for each component
       const result = [];
-      for (const comp of components) {
-        const screenshotResult = await pool.request()
-          .input('cid', comp.id)
-          .query('SELECT TOP 1 * FROM Screenshots WHERE component_id = @cid ORDER BY sort_order ASC');
-
-        const thumbnail = screenshotResult.recordset[0];
+      for (const comp of items) {
+        const screenshots = await getScreenshotsByComponentId(comp.rowKey);
+        const thumbnail = screenshots[0];
         result.push({
-          ...comp,
+          id: comp.rowKey,
+          title: comp.title,
+          description: comp.description,
+          file_name: comp.file_name,
+          author_name: comp.author_name,
+          author_email: comp.author_email,
+          author_id: comp.author_id,
+          created_at: comp.created_at,
           thumbnail: thumbnail ? generateReadSasUrl(thumbnail.blob_url) : null,
         });
       }

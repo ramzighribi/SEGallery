@@ -1,155 +1,140 @@
-import sql from 'mssql';
+import { TableClient, TableServiceClient, odata } from '@azure/data-tables';
 
-let pool: sql.ConnectionPool | null = null;
+// Table names
+const COMPONENTS_TABLE = 'Components';
+const SCREENSHOTS_TABLE = 'Screenshots';
 
-async function getAccessToken(): Promise<string> {
-  const resource = 'https://database.windows.net';
+let tablesInitialized = false;
 
-  const msiEndpoint = process.env.MSI_ENDPOINT;
-  const msiSecret = process.env.MSI_SECRET;
-  const identityEndpoint = process.env.IDENTITY_ENDPOINT;
-  const identityHeader = process.env.IDENTITY_HEADER;
-
-  // Build a list of strategies to try in order
-  const strategies: { name: string; url: string; headers: Record<string, string> }[] = [];
-
-  if (msiEndpoint && msiSecret) {
-    strategies.push({
-      name: 'MSI_ENDPOINT+MSI_SECRET',
-      url: `${msiEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2017-09-01`,
-      headers: { 'Secret': msiSecret },
-    });
-  }
-
-  if (identityEndpoint && identityHeader) {
-    strategies.push({
-      name: 'IDENTITY_ENDPOINT+IDENTITY_HEADER',
-      url: `${identityEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2019-08-01`,
-      headers: { 'X-IDENTITY-HEADER': identityHeader },
-    });
-  }
-
-  // SWA managed functions: endpoint exists but no secret — call without auth header
-  if (identityEndpoint && !identityHeader) {
-    strategies.push({
-      name: 'IDENTITY_ENDPOINT (no header)',
-      url: `${identityEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2019-08-01`,
-      headers: {},
-    });
-  }
-
-  if (msiEndpoint && !msiSecret) {
-    strategies.push({
-      name: 'MSI_ENDPOINT (no secret)',
-      url: `${msiEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2017-09-01`,
-      headers: {},
-    });
-  }
-
-  if (strategies.length === 0) {
-    const envDump = Object.entries(process.env)
-      .filter(([k]) => /identity|msi|endpoint|secret|header/i.test(k))
-      .map(([k, v]) => `${k}=${v ? '[set]' : 'undefined'}`)
-      .join(', ');
-    throw new Error(`No MSI endpoint available. Env vars: ${envDump || 'none'}`);
-  }
-
-  const errors: string[] = [];
-
-  for (const strategy of strategies) {
-    try {
-      const response = await fetch(strategy.url, { headers: strategy.headers });
-
-      if (!response.ok) {
-        const body = await response.text();
-        errors.push(`[${strategy.name}] HTTP ${response.status}: ${body}`);
-        continue;
-      }
-
-      const tokenResponse = await response.json() as { access_token?: string };
-      if (!tokenResponse.access_token) {
-        errors.push(`[${strategy.name}] No access_token in response: ${JSON.stringify(tokenResponse)}`);
-        continue;
-      }
-
-      return tokenResponse.access_token;
-    } catch (err: any) {
-      errors.push(`[${strategy.name}] ${err.message}`);
-    }
-  }
-
-  throw new Error(`All MSI strategies failed:\n${errors.join('\n')}`);
+function getConnectionString(): string {
+  const cs = process.env.AZURE_STORAGE_CONNECTION_STRING;
+  if (!cs) throw new Error('AZURE_STORAGE_CONNECTION_STRING is not set');
+  return cs;
 }
 
-export async function getPool(): Promise<sql.ConnectionPool> {
-  if (pool && pool.connected) return pool;
+export function getComponentsTable(): TableClient {
+  return TableClient.fromConnectionString(getConnectionString(), COMPONENTS_TABLE);
+}
 
-  const server = process.env.SQL_SERVER;
-  const database = process.env.SQL_DATABASE;
-  if (!server || !database) {
-    throw new Error('SQL_SERVER and SQL_DATABASE environment variables must be set');
-  }
-
-  const token = await getAccessToken();
-
-  const config: sql.config = {
-    server,
-    database,
-    options: {
-      encrypt: true,
-      trustServerCertificate: false,
-    },
-    authentication: {
-      type: 'azure-active-directory-access-token',
-      options: {
-        token,
-      },
-    },
-  };
-
-  pool = await sql.connect(config);
-  return pool;
+export function getScreenshotsTable(): TableClient {
+  return TableClient.fromConnectionString(getConnectionString(), SCREENSHOTS_TABLE);
 }
 
 export async function initDatabase(): Promise<void> {
-  const p = await getPool();
+  if (tablesInitialized) return;
+  const svc = TableServiceClient.fromConnectionString(getConnectionString());
+  // createTable is idempotent (409 if exists is ignored)
+  await svc.createTable(COMPONENTS_TABLE).catch(() => {});
+  await svc.createTable(SCREENSHOTS_TABLE).catch(() => {});
+  tablesInitialized = true;
+}
 
-  await p.request().query(`
-    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Components')
-    CREATE TABLE Components (
-      id NVARCHAR(36) PRIMARY KEY,
-      title NVARCHAR(200) NOT NULL,
-      description NVARCHAR(MAX) NOT NULL,
-      file_name NVARCHAR(500) NOT NULL,
-      file_blob_url NVARCHAR(2000) NOT NULL,
-      author_name NVARCHAR(200) NOT NULL,
-      author_email NVARCHAR(200) NOT NULL,
-      author_id NVARCHAR(200) NOT NULL,
-      created_at DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
-      updated_at DATETIME2 NOT NULL DEFAULT GETUTCDATE()
-    )
-  `);
+// --- Component helpers ---
 
-  await p.request().query(`
-    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Screenshots')
-    CREATE TABLE Screenshots (
-      id NVARCHAR(36) PRIMARY KEY,
-      component_id NVARCHAR(36) NOT NULL,
-      file_name NVARCHAR(500) NOT NULL,
-      blob_url NVARCHAR(2000) NOT NULL,
-      sort_order INT NOT NULL DEFAULT 0,
-      created_at DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
-      FOREIGN KEY (component_id) REFERENCES Components(id) ON DELETE CASCADE
-    )
-  `);
+export interface ComponentEntity {
+  partitionKey: string;   // fixed "C"
+  rowKey: string;         // component id
+  title: string;
+  description: string;
+  file_name: string;
+  file_blob_url: string;
+  author_name: string;
+  author_email: string;
+  author_id: string;
+  created_at: string;     // ISO string
+  updated_at: string;
+}
 
-  await p.request().query(`
-    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Components_AuthorId')
-    CREATE INDEX IX_Components_AuthorId ON Components(author_id)
-  `);
+export interface ScreenshotEntity {
+  partitionKey: string;   // component id
+  rowKey: string;         // screenshot id
+  file_name: string;
+  blob_url: string;
+  sort_order: number;
+  created_at: string;
+}
 
-  await p.request().query(`
-    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Screenshots_ComponentId')
-    CREATE INDEX IX_Screenshots_ComponentId ON Screenshots(component_id)
-  `);
+export async function insertComponent(comp: Omit<ComponentEntity, 'partitionKey'>): Promise<void> {
+  const table = getComponentsTable();
+  await table.createEntity({ ...comp, partitionKey: 'C' });
+}
+
+export async function getComponentById(id: string): Promise<ComponentEntity | null> {
+  const table = getComponentsTable();
+  try {
+    const entity = await table.getEntity('C', id);
+    return entity as unknown as ComponentEntity;
+  } catch (e: any) {
+    if (e.statusCode === 404) return null;
+    throw e;
+  }
+}
+
+export async function deleteComponentById(id: string): Promise<void> {
+  const table = getComponentsTable();
+  await table.deleteEntity('C', id);
+}
+
+export async function listComponents(search: string, page: number, limit: number): Promise<{ items: ComponentEntity[]; total: number }> {
+  const table = getComponentsTable();
+  const all: ComponentEntity[] = [];
+
+  // Table Storage doesn't support LIKE — we fetch all and filter in memory
+  const iter = table.listEntities<ComponentEntity>({ queryOptions: { filter: odata`PartitionKey eq 'C'` } });
+  for await (const entity of iter) {
+    if (search) {
+      const s = search.toLowerCase();
+      const match =
+        (entity.title || '').toLowerCase().includes(s) ||
+        (entity.description || '').toLowerCase().includes(s) ||
+        (entity.author_name || '').toLowerCase().includes(s);
+      if (!match) continue;
+    }
+    all.push(entity as unknown as ComponentEntity);
+  }
+
+  // Sort by created_at descending
+  all.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+
+  const total = all.length;
+  const offset = (page - 1) * limit;
+  const items = all.slice(offset, offset + limit);
+
+  return { items, total };
+}
+
+// --- Screenshot helpers ---
+
+export async function insertScreenshot(ss: Omit<ScreenshotEntity, 'partitionKey'> & { component_id: string }): Promise<void> {
+  const table = getScreenshotsTable();
+  await table.createEntity({
+    partitionKey: ss.component_id,
+    rowKey: ss.rowKey,
+    file_name: ss.file_name,
+    blob_url: ss.blob_url,
+    sort_order: ss.sort_order,
+    created_at: ss.created_at,
+  });
+}
+
+export async function getScreenshotsByComponentId(componentId: string): Promise<ScreenshotEntity[]> {
+  const table = getScreenshotsTable();
+  const results: ScreenshotEntity[] = [];
+  const iter = table.listEntities<ScreenshotEntity>({
+    queryOptions: { filter: odata`PartitionKey eq ${componentId}` },
+  });
+  for await (const entity of iter) {
+    results.push(entity as unknown as ScreenshotEntity);
+  }
+  results.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  return results;
+}
+
+export async function deleteScreenshotsByComponentId(componentId: string): Promise<ScreenshotEntity[]> {
+  const table = getScreenshotsTable();
+  const screenshots = await getScreenshotsByComponentId(componentId);
+  for (const ss of screenshots) {
+    await table.deleteEntity(componentId, ss.rowKey);
+  }
+  return screenshots;
 }

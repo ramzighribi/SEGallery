@@ -1,10 +1,9 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { getPool, initDatabase } from '../database.js';
+import { initDatabase, getComponentById, getScreenshotsByComponentId } from '../database.js';
 import { generateReadSasUrl } from '../storage.js';
 
 let dbInitialized = false;
 
-// GET /api/components/{id}
 app.http('getComponentById', {
   methods: ['GET'],
   authLevel: 'anonymous',
@@ -12,34 +11,33 @@ app.http('getComponentById', {
   handler: async (req: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> => {
     try {
       if (!dbInitialized) { await initDatabase(); dbInitialized = true; }
-      const pool = await getPool();
       const id = req.params.id;
 
-      const compResult = await pool.request()
-        .input('id', id)
-        .query('SELECT * FROM Components WHERE id = @id');
-
-      if (compResult.recordset.length === 0) {
+      const component = await getComponentById(id!);
+      if (!component) {
         return { status: 404, jsonBody: { error: 'Component not found' } };
       }
 
-      const component = compResult.recordset[0];
-
-      const screenshotsResult = await pool.request()
-        .input('cid', id)
-        .query('SELECT * FROM Screenshots WHERE component_id = @cid ORDER BY sort_order ASC');
-
-      const screenshots = screenshotsResult.recordset.map((s: any) => ({
-        id: s.id,
-        fileName: s.file_name,
-        url: generateReadSasUrl(s.blob_url),
-      }));
+      const screenshots = await getScreenshotsByComponentId(id!);
 
       return {
         jsonBody: {
-          ...component,
-          screenshots,
+          id: component.rowKey,
+          title: component.title,
+          description: component.description,
+          file_name: component.file_name,
+          file_blob_url: component.file_blob_url,
+          author_name: component.author_name,
+          author_email: component.author_email,
+          author_id: component.author_id,
+          created_at: component.created_at,
+          updated_at: component.updated_at,
           fileUrl: generateReadSasUrl(component.file_blob_url),
+          screenshots: screenshots.map((s) => ({
+            id: s.rowKey,
+            fileName: s.file_name,
+            url: generateReadSasUrl(s.blob_url),
+          })),
         },
       };
     } catch (err: any) {
