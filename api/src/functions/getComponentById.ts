@@ -20,6 +20,15 @@ app.http('getComponentById', {
 
       const screenshots = await getScreenshotsByComponentId(id!);
 
+      const screenshotResults = [];
+      for (const s of screenshots) {
+        screenshotResults.push({
+          id: s.rowKey,
+          fileName: s.file_name,
+          url: await generateReadSasUrl(s.blob_url),
+        });
+      }
+
       return {
         jsonBody: {
           id: component.rowKey,
@@ -32,12 +41,8 @@ app.http('getComponentById', {
           author_id: component.author_id,
           created_at: component.created_at,
           updated_at: component.updated_at,
-          fileUrl: generateReadSasUrl(component.file_blob_url),
-          screenshots: screenshots.map((s) => ({
-            id: s.rowKey,
-            fileName: s.file_name,
-            url: generateReadSasUrl(s.blob_url),
-          })),
+          fileUrl: await generateReadSasUrl(component.file_blob_url),
+          screenshots: screenshotResults,
         },
       };
     } catch (err: any) {

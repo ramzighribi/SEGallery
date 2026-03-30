@@ -1,4 +1,5 @@
 import { TableClient, TableServiceClient, odata } from '@azure/data-tables';
+import { DefaultAzureCredential } from '@azure/identity';
 
 // Table names
 const COMPONENTS_TABLE = 'Components';
@@ -6,23 +7,25 @@ const SCREENSHOTS_TABLE = 'Screenshots';
 
 let tablesInitialized = false;
 
-function getConnectionString(): string {
-  const cs = process.env.AZURE_STORAGE_CONNECTION_STRING;
-  if (!cs) throw new Error('AZURE_STORAGE_CONNECTION_STRING is not set');
-  return cs;
+const credential = new DefaultAzureCredential();
+
+function getTableUrl(): string {
+  const account = process.env.STORAGE_ACCOUNT_NAME;
+  if (!account) throw new Error('STORAGE_ACCOUNT_NAME is not set');
+  return `https://${account}.table.core.windows.net`;
 }
 
 export function getComponentsTable(): TableClient {
-  return TableClient.fromConnectionString(getConnectionString(), COMPONENTS_TABLE);
+  return new TableClient(getTableUrl(), COMPONENTS_TABLE, credential);
 }
 
 export function getScreenshotsTable(): TableClient {
-  return TableClient.fromConnectionString(getConnectionString(), SCREENSHOTS_TABLE);
+  return new TableClient(getTableUrl(), SCREENSHOTS_TABLE, credential);
 }
 
 export async function initDatabase(): Promise<void> {
   if (tablesInitialized) return;
-  const svc = TableServiceClient.fromConnectionString(getConnectionString());
+  const svc = new TableServiceClient(getTableUrl(), credential);
   // createTable is idempotent (409 if exists is ignored)
   await svc.createTable(COMPONENTS_TABLE).catch(() => {});
   await svc.createTable(SCREENSHOTS_TABLE).catch(() => {});

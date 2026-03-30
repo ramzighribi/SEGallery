@@ -1,15 +1,22 @@
-import { BlobServiceClient, generateBlobSASQueryParameters, BlobSASPermissions, StorageSharedKeyCredential, SASProtocol } from '@azure/storage-blob';
+import { BlobServiceClient, BlobSASPermissions, SASProtocol, generateBlobSASQueryParameters, UserDelegationKey } from '@azure/storage-blob';
+import { DefaultAzureCredential } from '@azure/identity';
+
+const credential = new DefaultAzureCredential();
 
 let blobServiceClient: BlobServiceClient | null = null;
 
+function getAccountName(): string {
+  const name = process.env.STORAGE_ACCOUNT_NAME;
+  if (!name) throw new Error('STORAGE_ACCOUNT_NAME is not set');
+  return name;
+}
+
 function getClient(): BlobServiceClient {
   if (blobServiceClient) return blobServiceClient;
-
-  const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
-  if (!connectionString) {
-    throw new Error('AZURE_STORAGE_CONNECTION_STRING is not set');
-  }
-  blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  blobServiceClient = new BlobServiceClient(
+    `https://${getAccountName()}.blob.core.windows.net`,
+    credential
+  );
   return blobServiceClient;
 }
 
@@ -37,29 +44,37 @@ export async function deleteBlob(containerName: string, blobName: string): Promi
   await blockBlobClient.deleteIfExists();
 }
 
-export function generateReadSasUrl(blobUrl: string): string {
-  // Parse connection string to get account name and key
-  const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING || '';
-  const accountNameMatch = connectionString.match(/AccountName=([^;]+)/);
-  const accountKeyMatch = connectionString.match(/AccountKey=([^;]+)/);
+// Cache user delegation key (valid 1h, refreshed every 50min)
+let cachedUDK: { key: UserDelegationKey; expiresOn: Date } | null = null;
 
-  if (!accountNameMatch || !accountKeyMatch) {
-    // Fallback: return raw URL (works for dev storage or public access)
-    return blobUrl;
-  }
+async function getUserDelegationKey(): Promise<UserDelegationKey> {
+  const now = new Date();
+  if (cachedUDK && cachedUDK.expiresOn > now) return cachedUDK.key;
 
-  const accountName = accountNameMatch[1];
-  const accountKey = accountKeyMatch[1];
-  const credential = new StorageSharedKeyCredential(accountName, accountKey);
+  const client = getClient();
+  const startsOn = new Date();
+  const expiresOn = new Date();
+  expiresOn.setHours(expiresOn.getHours() + 1);
 
-  // Parse the container and blob name from the URL
+  const udk = await client.getUserDelegationKey(startsOn, expiresOn);
+  // Refresh 10 min before expiry
+  const cacheExpiry = new Date(expiresOn.getTime() - 10 * 60 * 1000);
+  cachedUDK = { key: udk, expiresOn: cacheExpiry };
+  return udk;
+}
+
+export async function generateReadSasUrl(blobUrl: string): Promise<string> {
+  const accountName = getAccountName();
+
   const url = new URL(blobUrl);
   const pathParts = url.pathname.split('/').filter(Boolean);
   const containerName = pathParts[0];
   const blobName = pathParts.slice(1).join('/');
 
+  const udk = await getUserDelegationKey();
+
   const expiresOn = new Date();
-  expiresOn.setHours(expiresOn.getHours() + 1); // 1-hour SAS
+  expiresOn.setHours(expiresOn.getHours() + 1);
 
   const sasToken = generateBlobSASQueryParameters(
     {
@@ -70,7 +85,8 @@ export function generateReadSasUrl(blobUrl: string): string {
       expiresOn,
       protocol: SASProtocol.Https,
     },
-    credential
+    udk,
+    accountName
   ).toString();
 
   return `${blobUrl}?${sasToken}`;

@@ -31,7 +31,7 @@ app.http('getComponents', {
           author_email: comp.author_email,
           author_id: comp.author_id,
           created_at: comp.created_at,
-          thumbnail: thumbnail ? generateReadSasUrl(thumbnail.blob_url) : null,
+          thumbnail: thumbnail ? await generateReadSasUrl(thumbnail.blob_url) : null,
         });
       }
 
