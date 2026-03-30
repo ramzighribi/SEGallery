@@ -48,4 +48,3 @@ jobs:
           output_location: dist
           api_location: ./api/build
           skip_app_build: true
-          skip_api_build: true

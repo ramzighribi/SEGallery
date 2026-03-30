@@ -38,5 +38,6 @@ const { writeFileSync } = await import('fs');
 writeFileSync(join(outDir, 'package.json'), JSON.stringify({
   name: 'segallery-api',
   version: '1.0.0',
-  main: 'functions/*.js'
+  main: 'functions/*.js',
+  scripts: { build: 'echo build done' }
 }, null, 2));
