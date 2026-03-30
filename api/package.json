@@ -1,0 +1,22 @@
+{
+  "name": "segallery-api",
+  "version": "1.0.0",
+  "description": "SEGallery Azure Functions API",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.2.2",
+    "@azure/functions": "^4.5.0",
+    "@azure/storage-blob": "^12.17.0",
+    "mssql": "^11.0.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/mssql": "^9.1.5",
+    "@types/uuid": "^9.0.7",
+    "typescript": "^5.3.3"
+  }
+}
