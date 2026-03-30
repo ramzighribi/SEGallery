@@ -3,16 +3,6 @@
     "rewrite": "/index.html",
     "exclude": ["/api/*", "/uploads/*", "/.auth/*"]
   },
-  "auth": {
-    "identityProviders": {
-      "azureActiveDirectory": {
-        "registration": {
-          "openIdIssuer": "https://login.microsoftonline.com/{TENANT_ID}/v2.0",
-          "clientIdSettingName": "AAD_CLIENT_ID"
-        }
-      }
-    }
-  },
   "routes": [
     {
       "route": "/api/components",
