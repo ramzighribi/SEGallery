@@ -18,6 +18,7 @@ import {
 import { createComponent } from '../services/api';
 import { getAuthInfo, loginUrl, SwaUser } from '../services/auth';
 import ErrorBar from '../components/ErrorBar';
+import RichTextEditor from '../components/RichTextEditor';
 
 const useStyles = makeStyles({
   container: {
@@ -557,12 +558,10 @@ export default function UploadPage() {
             <label className={styles.label}>
               Description <span className={styles.required}>*</span>
             </label>
-            <textarea
-              className={styles.textarea}
-              placeholder="Décrivez votre composant : fonctionnalités, cas d'usage, dépendances..."
+            <RichTextEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={5}
+              onChange={setDescription}
+              placeholder="Décrivez votre composant : fonctionnalités, cas d'usage, dépendances..."
             />
           </div>
 

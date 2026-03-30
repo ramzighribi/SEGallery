@@ -33,6 +33,7 @@ import {
 import { fetchComponentById, deleteComponent, trackDownload, rateComponent, updateComponent, formatAuthorName, getDownloadUrl, ComponentDetail } from '../services/api';
 import { getAuthInfo, SwaUser } from '../services/auth';
 import ErrorBar from '../components/ErrorBar';
+import RichTextEditor from '../components/RichTextEditor';
 
 const useStyles = makeStyles({
   container: {
@@ -95,7 +96,7 @@ const useStyles = makeStyles({
     fontSize: '15px',
     lineHeight: '1.7',
     color: tokens.colorNeutralForeground2,
-    whiteSpace: 'pre-wrap' as const,
+    '& p': { margin: '0 0 8px' },
   },
   statsRow: {
     display: 'flex',
@@ -794,7 +795,7 @@ export default function DetailPage() {
           <div className={styles.titleRow}>
             <div className={styles.titleLeft}>
               <h1 className={styles.title}>{component.title}</h1>
-              <p className={styles.description}>{component.description}</p>
+              <div className={styles.description} dangerouslySetInnerHTML={{ __html: component.description }} />
 
               <div className={styles.statsRow}>
                 <div className={styles.statCard}>
@@ -1047,11 +1048,9 @@ export default function DetailPage() {
             </div>
             <div className={styles.editField}>
               <label className={styles.editLabel}>Description</label>
-              <textarea
-                className={styles.editTextarea}
+              <RichTextEditor
                 value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                rows={5}
+                onChange={setEditDescription}
               />
             </div>
             <div className={styles.editField}>

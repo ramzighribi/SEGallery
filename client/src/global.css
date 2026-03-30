@@ -108,3 +108,93 @@ html, body {
   background-color: rgba(0, 120, 212, 0.2);
   color: inherit;
 }
+
+/* ─── Quill Rich Text Editor ─── */
+.quill {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid rgba(0, 120, 212, 0.18);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px);
+  transition: var(--transition-smooth);
+}
+
+.quill:focus-within {
+  border-color: #0078d4;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.12);
+}
+
+.ql-toolbar.ql-snow {
+  border: none !important;
+  border-bottom: 1px solid rgba(0, 120, 212, 0.12) !important;
+  background: rgba(0, 120, 212, 0.04);
+  font-family: 'Segoe UI Variable', 'Segoe UI', sans-serif;
+}
+
+.ql-container.ql-snow {
+  border: none !important;
+  font-family: 'Segoe UI Variable', 'Segoe UI', sans-serif;
+  font-size: 14px;
+  min-height: 120px;
+}
+
+.ql-editor {
+  min-height: 120px;
+  line-height: 1.6;
+  color: #242424;
+}
+
+.ql-editor.ql-blank::before {
+  color: rgba(0, 0, 0, 0.35);
+  font-style: normal;
+}
+
+.ql-snow .ql-stroke {
+  stroke: #424242;
+}
+
+.ql-snow .ql-fill {
+  fill: #424242;
+}
+
+.ql-snow .ql-picker-label {
+  color: #424242;
+}
+
+.ql-snow .ql-active .ql-stroke,
+.ql-snow .ql-picker-label.ql-active .ql-stroke {
+  stroke: #0078d4 !important;
+}
+
+.ql-snow .ql-active .ql-fill,
+.ql-snow .ql-picker-label.ql-active .ql-fill {
+  fill: #0078d4 !important;
+}
+
+.ql-snow .ql-active,
+.ql-snow .ql-picker-label.ql-active {
+  color: #0078d4 !important;
+}
+
+/* Rendered rich text in detail page */
+.ql-rendered h1,
+.ql-rendered h2,
+.ql-rendered h3 {
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.ql-rendered ul,
+.ql-rendered ol {
+  padding-left: 24px;
+  margin: 0 0 8px;
+}
+
+.ql-rendered a {
+  color: #0078d4;
+  text-decoration: none;
+}
+
+.ql-rendered a:hover {
+  text-decoration: underline;
+}

@@ -16,6 +16,7 @@ import {
 } from '@fluentui/react-icons';
 import type { ComponentSummary } from '../services/api';
 import { formatAuthorName } from '../services/api';
+import { stripHtml } from './RichTextEditor';
 
 const useStyles = makeStyles({
   card: {
@@ -280,14 +281,14 @@ export default function ComponentCard({ component }: Props) {
             Aperçu
           </div>
           <div className={styles.overlayDesc}>
-            {component.description || 'Aucune description disponible.'}
+            {stripHtml(component.description) || 'Aucune description disponible.'}
           </div>
         </div>
       </div>
 
       <div className={styles.body}>
         <Text className={styles.title}>{component.title}</Text>
-        <Text className={styles.descriptionText}>{component.description}</Text>
+        <Text className={styles.descriptionText}>{stripHtml(component.description)}</Text>
       </div>
 
       <div className={styles.footer}>
