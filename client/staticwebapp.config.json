@@ -15,10 +15,6 @@
   },
   "routes": [
     {
-      "route": "/api/*",
-      "allowedRoles": ["authenticated"]
-    },
-    {
       "route": "/api/components",
       "methods": ["GET"],
       "allowedRoles": ["anonymous"]
@@ -27,6 +23,10 @@
       "route": "/api/components/*",
       "methods": ["GET"],
       "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/*",
+      "allowedRoles": ["authenticated"]
     },
     {
       "route": "/.auth/login/aad",
