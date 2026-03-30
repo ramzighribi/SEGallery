@@ -5,47 +5,80 @@ let pool: sql.ConnectionPool | null = null;
 async function getAccessToken(): Promise<string> {
   const resource = 'https://database.windows.net';
 
-  // SWA managed functions use MSI_ENDPOINT + MSI_SECRET
   const msiEndpoint = process.env.MSI_ENDPOINT;
   const msiSecret = process.env.MSI_SECRET;
-
-  // App Service / Azure Functions use IDENTITY_ENDPOINT + IDENTITY_HEADER
   const identityEndpoint = process.env.IDENTITY_ENDPOINT;
   const identityHeader = process.env.IDENTITY_HEADER;
 
-  let url: string;
-  let headers: Record<string, string>;
+  // Build a list of strategies to try in order
+  const strategies: { name: string; url: string; headers: Record<string, string> }[] = [];
 
   if (msiEndpoint && msiSecret) {
-    url = `${msiEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2017-09-01`;
-    headers = { 'Secret': msiSecret };
-  } else if (identityEndpoint && identityHeader) {
-    url = `${identityEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2019-08-01`;
-    headers = { 'X-IDENTITY-HEADER': identityHeader };
-  } else {
-    // Dump all relevant env vars for debugging
+    strategies.push({
+      name: 'MSI_ENDPOINT+MSI_SECRET',
+      url: `${msiEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2017-09-01`,
+      headers: { 'Secret': msiSecret },
+    });
+  }
+
+  if (identityEndpoint && identityHeader) {
+    strategies.push({
+      name: 'IDENTITY_ENDPOINT+IDENTITY_HEADER',
+      url: `${identityEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2019-08-01`,
+      headers: { 'X-IDENTITY-HEADER': identityHeader },
+    });
+  }
+
+  // SWA managed functions: endpoint exists but no secret — call without auth header
+  if (identityEndpoint && !identityHeader) {
+    strategies.push({
+      name: 'IDENTITY_ENDPOINT (no header)',
+      url: `${identityEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2019-08-01`,
+      headers: {},
+    });
+  }
+
+  if (msiEndpoint && !msiSecret) {
+    strategies.push({
+      name: 'MSI_ENDPOINT (no secret)',
+      url: `${msiEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2017-09-01`,
+      headers: {},
+    });
+  }
+
+  if (strategies.length === 0) {
     const envDump = Object.entries(process.env)
       .filter(([k]) => /identity|msi|endpoint|secret|header/i.test(k))
       .map(([k, v]) => `${k}=${v ? '[set]' : 'undefined'}`)
       .join(', ');
-    throw new Error(
-      `Managed identity not available. No supported MSI env vars found. Relevant vars: ${envDump || 'none'}`
-    );
+    throw new Error(`No MSI endpoint available. Env vars: ${envDump || 'none'}`);
   }
 
-  const response = await fetch(url, { headers });
+  const errors: string[] = [];
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`MSI token request failed (${response.status}): ${body}`);
+  for (const strategy of strategies) {
+    try {
+      const response = await fetch(strategy.url, { headers: strategy.headers });
+
+      if (!response.ok) {
+        const body = await response.text();
+        errors.push(`[${strategy.name}] HTTP ${response.status}: ${body}`);
+        continue;
+      }
+
+      const tokenResponse = await response.json() as { access_token?: string };
+      if (!tokenResponse.access_token) {
+        errors.push(`[${strategy.name}] No access_token in response: ${JSON.stringify(tokenResponse)}`);
+        continue;
+      }
+
+      return tokenResponse.access_token;
+    } catch (err: any) {
+      errors.push(`[${strategy.name}] ${err.message}`);
+    }
   }
 
-  const tokenResponse = await response.json() as { access_token: string };
-  if (!tokenResponse.access_token) {
-    throw new Error(`MSI token response missing access_token: ${JSON.stringify(tokenResponse)}`);
-  }
-
-  return tokenResponse.access_token;
+  throw new Error(`All MSI strategies failed:\n${errors.join('\n')}`);
 }
 
 export async function getPool(): Promise<sql.ConnectionPool> {
