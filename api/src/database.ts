@@ -3,22 +3,37 @@ import sql from 'mssql';
 let pool: sql.ConnectionPool | null = null;
 
 async function getAccessToken(): Promise<string> {
-  const endpoint = process.env.IDENTITY_ENDPOINT;
-  const header = process.env.IDENTITY_HEADER;
+  const resource = 'https://database.windows.net';
 
-  if (!endpoint || !header) {
+  // SWA managed functions use MSI_ENDPOINT + MSI_SECRET
+  const msiEndpoint = process.env.MSI_ENDPOINT;
+  const msiSecret = process.env.MSI_SECRET;
+
+  // App Service / Azure Functions use IDENTITY_ENDPOINT + IDENTITY_HEADER
+  const identityEndpoint = process.env.IDENTITY_ENDPOINT;
+  const identityHeader = process.env.IDENTITY_HEADER;
+
+  let url: string;
+  let headers: Record<string, string>;
+
+  if (msiEndpoint && msiSecret) {
+    url = `${msiEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2017-09-01`;
+    headers = { 'Secret': msiSecret };
+  } else if (identityEndpoint && identityHeader) {
+    url = `${identityEndpoint}?resource=${encodeURIComponent(resource)}&api-version=2019-08-01`;
+    headers = { 'X-IDENTITY-HEADER': identityHeader };
+  } else {
+    // Dump all relevant env vars for debugging
+    const envDump = Object.entries(process.env)
+      .filter(([k]) => /identity|msi|endpoint|secret|header/i.test(k))
+      .map(([k, v]) => `${k}=${v ? '[set]' : 'undefined'}`)
+      .join(', ');
     throw new Error(
-      'Managed identity not available: IDENTITY_ENDPOINT and IDENTITY_HEADER env vars are missing. ' +
-      `IDENTITY_ENDPOINT=${endpoint ?? 'undefined'}, IDENTITY_HEADER=${header ? '[set]' : 'undefined'}`
+      `Managed identity not available. No supported MSI env vars found. Relevant vars: ${envDump || 'none'}`
     );
   }
 
-  const resource = 'https://database.windows.net';
-  const url = `${endpoint}?resource=${encodeURIComponent(resource)}&api-version=2019-08-01`;
-
-  const response = await fetch(url, {
-    headers: { 'X-IDENTITY-HEADER': header },
-  });
+  const response = await fetch(url, { headers });
 
   if (!response.ok) {
     const body = await response.text();
