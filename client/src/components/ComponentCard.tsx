@@ -92,26 +92,33 @@ const useStyles = makeStyles({
   },
   statsOverlay: {
     position: 'absolute' as const,
-    top: '12px',
-    right: '12px',
+    top: '10px',
+    right: '10px',
     display: 'flex',
-    gap: '6px',
+    gap: '5px',
   },
   statPill: {
     display: 'flex',
     alignItems: 'center',
     gap: '4px',
-    ...shorthands.padding('5px', '10px'),
+    ...shorthands.padding('4px', '10px'),
     ...shorthands.borderRadius('50px'),
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
     backdropFilter: 'blur(12px)',
     WebkitBackdropFilter: 'blur(12px)',
-    color: 'white',
-    fontSize: '12px',
+    fontSize: '11.5px',
     fontWeight: '600',
+    ...shorthands.border('1px', 'solid', 'rgba(255, 255, 255, 0.2)'),
+  },
+  viewsPill: {
+    backgroundColor: 'rgba(99, 102, 241, 0.85)',
+    color: 'white',
+  },
+  downloadsPill: {
+    backgroundColor: 'rgba(16, 185, 129, 0.85)',
+    color: 'white',
   },
   ratingPill: {
-    background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+    backgroundColor: 'rgba(245, 158, 11, 0.9)',
     color: 'white',
   },
   descriptionOverlay: {
@@ -120,9 +127,9 @@ const useStyles = makeStyles({
     left: 0,
     right: 0,
     ...shorthands.padding('16px', '16px', '14px'),
-    background: 'linear-gradient(to top, rgba(99, 102, 241, 0.92) 0%, rgba(79, 70, 229, 0.85) 50%, rgba(139, 92, 246, 0.6) 80%, transparent 100%)',
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
+    background: 'linear-gradient(to top, rgba(15, 15, 25, 0.88) 0%, rgba(15, 15, 25, 0.65) 55%, transparent 100%)',
+    backdropFilter: 'blur(6px)',
+    WebkitBackdropFilter: 'blur(6px)',
     color: 'white',
     transitionDuration: '0.35s',
     transitionProperty: 'opacity, transform',
@@ -269,11 +276,11 @@ export default function ComponentCard({ component }: Props) {
           </div>
         )}
         <div className={styles.statsOverlay}>
-          <div className={styles.statPill}>
+          <div className={`${styles.statPill} ${styles.viewsPill}`}>
             <DataTrendingRegular fontSize={13} />
             {formatCount(component.view_count || 0)}
           </div>
-          <div className={styles.statPill}>
+          <div className={`${styles.statPill} ${styles.downloadsPill}`}>
             <ArrowTrendingRegular fontSize={13} />
             {formatCount(component.download_count || 0)}
           </div>
