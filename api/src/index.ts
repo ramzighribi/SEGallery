@@ -11,3 +11,4 @@ import './functions/getComments.js';
 import './functions/createComment.js';
 import './functions/updateComment.js';
 import './functions/deleteComment.js';
+import './functions/healthCheck.js';

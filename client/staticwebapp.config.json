@@ -5,6 +5,11 @@
   },
   "routes": [
     {
+      "route": "/api/health",
+      "methods": ["GET"],
+      "allowedRoles": ["anonymous"]
+    },
+    {
       "route": "/api/components",
       "methods": ["GET"],
       "allowedRoles": ["anonymous"]
