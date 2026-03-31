@@ -1,7 +1,5 @@
 import { BlobServiceClient, BlobSASPermissions, SASProtocol, generateBlobSASQueryParameters, UserDelegationKey } from '@azure/storage-blob';
-import { DefaultAzureCredential } from '@azure/identity';
-
-const credential = new DefaultAzureCredential();
+import { credential } from './credential';
 
 let blobServiceClient: BlobServiceClient | null = null;
 

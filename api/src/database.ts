@@ -1,5 +1,5 @@
 import { TableClient, TableServiceClient, odata } from '@azure/data-tables';
-import { DefaultAzureCredential } from '@azure/identity';
+import { credential } from './credential';
 
 // Table names
 const COMPONENTS_TABLE = 'Components';
@@ -7,8 +7,6 @@ const SCREENSHOTS_TABLE = 'Screenshots';
 const RATINGS_TABLE = 'Ratings';
 
 let tablesInitialized = false;
-
-const credential = new DefaultAzureCredential();
 
 function getTableUrl(): string {
   const account = process.env.STORAGE_ACCOUNT_NAME;
