@@ -124,6 +124,8 @@ const useStyles = makeStyles({
     gridTemplateColumns: 'repeat(3, 1fr)',
     gap: '10px',
     marginTop: '16px',
+    ...shorthands.padding('16px', '0', '0'),
+    borderTop: '1px solid rgba(0, 0, 0, 0.06)',
   },
   statCard: {
     display: 'flex',
@@ -1187,36 +1189,6 @@ export default function DetailPage() {
                 </div>
               )}
 
-              <div className={styles.statsRow}>
-                <div className={styles.statCard}>
-                  <div className={`${styles.statIcon} ${styles.statIconViews}`}>
-                    <EyeRegular fontSize={16} />
-                  </div>
-                  <div className={styles.statInfo}>
-                    <span className={styles.statValue}>{formatCount(component.view_count || 0)}</span>
-                    <span className={styles.statLabel}>Vues</span>
-                  </div>
-                </div>
-                <div className={styles.statCard}>
-                  <div className={`${styles.statIcon} ${styles.statIconDownloads}`}>
-                    <ArrowDownloadRegular fontSize={16} />
-                  </div>
-                  <div className={styles.statInfo}>
-                    <span className={styles.statValue}>{formatCount(downloadCount)}</span>
-                    <span className={styles.statLabel}>Téléch.</span>
-                  </div>
-                </div>
-                <div className={styles.statCard}>
-                  <div className={`${styles.statIcon} ${styles.statIconRating}`}>
-                    <StarFilled fontSize={16} />
-                  </div>
-                  <div className={styles.statInfo}>
-                    <span className={styles.statValue}>{averageRating > 0 ? averageRating.toFixed(1) : '—'}</span>
-                    <span className={styles.statLabel}>{ratingCount} avis</span>
-                  </div>
-                </div>
-              </div>
-
               <div className={styles.description} dangerouslySetInnerHTML={{ __html: component.description }} />
 
               <div className={styles.metaRow}>
@@ -1307,6 +1279,36 @@ export default function DetailPage() {
                   </div>
                 </div>
               )}
+
+              <div className={styles.statsRow}>
+                <div className={styles.statCard}>
+                  <div className={`${styles.statIcon} ${styles.statIconViews}`}>
+                    <EyeRegular fontSize={16} />
+                  </div>
+                  <div className={styles.statInfo}>
+                    <span className={styles.statValue}>{formatCount(component.view_count || 0)}</span>
+                    <span className={styles.statLabel}>Vues</span>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={`${styles.statIcon} ${styles.statIconDownloads}`}>
+                    <ArrowDownloadRegular fontSize={16} />
+                  </div>
+                  <div className={styles.statInfo}>
+                    <span className={styles.statValue}>{formatCount(downloadCount)}</span>
+                    <span className={styles.statLabel}>Téléch.</span>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={`${styles.statIcon} ${styles.statIconRating}`}>
+                    <StarFilled fontSize={16} />
+                  </div>
+                  <div className={styles.statInfo}>
+                    <span className={styles.statValue}>{averageRating > 0 ? averageRating.toFixed(1) : '—'}</span>
+                    <span className={styles.statLabel}>{ratingCount} avis</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

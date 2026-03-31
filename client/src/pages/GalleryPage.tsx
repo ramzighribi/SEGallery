@@ -299,8 +299,10 @@ export default function GalleryPage() {
       </div>
 
       {/* Tag filters */}
-      <div style={{ maxWidth: '700px', margin: '0 auto 32px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
+      <div style={{ maxWidth: '700px', margin: '0 auto 32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '8px', textAlign: 'center' as const }}>Secteur</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
           {SECTOR_TAGS.map((tag) => {
             const active = activeTags.includes(tag);
             return (
@@ -326,8 +328,11 @@ export default function GalleryPage() {
               >{tag}</button>
             );
           })}
+          </div>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
+        <div>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '8px', textAlign: 'center' as const }}>Table Dataverse</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
           {TABLE_TAGS.map((tag) => {
             const active = activeTags.includes(tag);
             return (
@@ -353,6 +358,7 @@ export default function GalleryPage() {
               >{tag}</button>
             );
           })}
+          </div>
         </div>
         {activeTags.length > 0 && (
           <div style={{ textAlign: 'center' }}>
