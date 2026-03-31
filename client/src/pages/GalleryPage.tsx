@@ -25,17 +25,17 @@ import { fetchComponents, ComponentSummary, PaginatedResponse, SECTOR_TAGS, TABL
 const useStyles = makeStyles({
   hero: {
     textAlign: 'center' as const,
-    ...shorthands.padding('56px', '24px', '48px'),
-    marginBottom: '40px',
+    ...shorthands.padding('32px', '24px', '24px'),
+    marginBottom: '24px',
     position: 'relative' as const,
   },
   heroTitle: {
-    fontSize: '48px',
+    fontSize: '36px',
     fontWeight: '800',
     letterSpacing: '-0.03em',
-    lineHeight: '1.08',
+    lineHeight: '1.1',
     color: tokens.colorNeutralForeground1,
-    marginBottom: '16px',
+    marginBottom: '20px',
   },
   heroGradient: {
     background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 40%, #a78bfa 70%, #6366f1 100%)',
@@ -49,15 +49,18 @@ const useStyles = makeStyles({
     animationTimingFunction: 'ease-in-out',
   },
   heroSubtitle: {
-    fontSize: '16px',
+    fontSize: '15px',
     color: tokens.colorNeutralForeground3,
-    lineHeight: '1.6',
+    lineHeight: '1.5',
     maxWidth: '520px',
-    ...shorthands.margin('0', 'auto', '36px'),
+    ...shorthands.margin('0', 'auto', '20px'),
   },
   searchWrapper: {
-    maxWidth: '560px',
+    maxWidth: '600px',
     ...shorthands.margin('0', 'auto'),
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
     position: 'relative' as const,
   },
   searchInput: {
@@ -297,50 +300,47 @@ export default function GalleryPage() {
           Découvrez les <span className={styles.heroGradient}>composants</span>
         </h1>
         <p className={styles.heroSubtitle}>
-          Explorez et partagez les composants développés par les équipes SE Dynamics 365
+          Explorez les composants développés par les équipes SE Dynamics 365
         </p>
         <div className={styles.searchWrapper}>
-          <SearchRegular className={styles.searchIcon} fontSize={20} />
-          <input
-            className={styles.searchInput}
-            placeholder="Rechercher un composant, auteur..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Tag filters */}
-      <div style={{ maxWidth: '700px', margin: '0 auto 24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <SearchRegular className={styles.searchIcon} fontSize={20} />
+            <input
+              className={styles.searchInput}
+              placeholder="Rechercher un composant, auteur..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           <button
             onClick={() => setFiltersOpen((v) => !v)}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '6px 16px',
+              padding: '12px 18px',
               borderRadius: '50px',
-              border: activeTags.length > 0 ? '1px solid #6366f1' : '1px solid rgba(0,0,0,0.08)',
-              backgroundColor: activeTags.length > 0 ? 'rgba(99,102,241,0.08)' : 'rgba(255,255,255,0.7)',
+              border: activeTags.length > 0 ? '1.5px solid #6366f1' : '1.5px solid rgba(99,102,241,0.12)',
+              backgroundColor: activeTags.length > 0 ? 'rgba(99,102,241,0.08)' : 'rgba(255,255,255,0.85)',
               color: activeTags.length > 0 ? '#6366f1' : '#666',
-              fontSize: '13px',
+              fontSize: '14px',
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'inherit',
-              transition: 'all 0.15s',
-              backdropFilter: 'blur(10px)',
+              transition: 'all 0.2s',
+              backdropFilter: 'blur(16px)',
+              boxShadow: '0 2px 12px rgba(99,102,241,0.06)',
+              flexShrink: 0,
             }}
           >
-            <FilterRegular fontSize={14} />
-            Filtres
+            <FilterRegular fontSize={16} />
             {activeTags.length > 0 && (
               <span style={{
-                backgroundColor: '#6366f1',
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                 color: 'white',
                 borderRadius: '50%',
-                width: '18px',
-                height: '18px',
+                width: '20px',
+                height: '20px',
                 fontSize: '11px',
                 fontWeight: 700,
                 display: 'inline-flex',
@@ -350,6 +350,14 @@ export default function GalleryPage() {
             )}
             {filtersOpen ? <ChevronUpRegular fontSize={12} /> : <ChevronDownRegular fontSize={12} />}
           </button>
+        </div>
+      </div>
+
+      {/* Active tag chips + filter panels */}
+      {(activeTags.length > 0 || filtersOpen) && (
+      <div style={{ maxWidth: '600px', margin: '0 auto 20px' }}>
+        {activeTags.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', alignItems: 'center', flexWrap: 'wrap', marginBottom: filtersOpen ? '10px' : '0' }}>
           {activeTags.map((tag) => (
             <span
               key={tag}
@@ -376,21 +384,21 @@ export default function GalleryPage() {
             >Tout effacer</button>
           )}
         </div>
+        )}
         {filtersOpen && (
           <div style={{
-            marginTop: '12px',
-            padding: '16px 20px',
-            borderRadius: '16px',
+            padding: '14px 18px',
+            borderRadius: '14px',
             backgroundColor: 'rgba(255,255,255,0.7)',
             backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(0,0,0,0.06)',
+            border: '1px solid rgba(99,102,241,0.08)',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
+            gap: '20px',
+            animation: 'slideDown 0.2s ease-out',
           }}>
-            <div>
+            <div style={{ flex: 1 }}>
               <div style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '6px' }}>Secteur</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                 {SECTOR_TAGS.map((tag) => {
                   const active = activeTags.includes(tag);
                   return (
@@ -398,12 +406,12 @@ export default function GalleryPage() {
                       key={tag}
                       onClick={() => { setActiveTags((prev) => active ? prev.filter((t) => t !== tag) : [...prev, tag]); setPage(1); }}
                       style={{
-                        padding: '4px 12px',
+                        padding: '4px 11px',
                         borderRadius: '50px',
                         border: active ? '1px solid #6366f1' : '1px solid rgba(0,0,0,0.06)',
                         backgroundColor: active ? 'rgba(99,102,241,0.1)' : 'transparent',
                         color: active ? '#6366f1' : '#666',
-                        fontSize: '12px',
+                        fontSize: '11.5px',
                         fontWeight: active ? 600 : 500,
                         cursor: 'pointer',
                         fontFamily: 'inherit',
@@ -414,9 +422,10 @@ export default function GalleryPage() {
                 })}
               </div>
             </div>
-            <div>
+            <div style={{ width: '1px', backgroundColor: 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
               <div style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '6px' }}>Table Dataverse</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                 {TABLE_TAGS.map((tag) => {
                   const active = activeTags.includes(tag);
                   return (
@@ -424,12 +433,12 @@ export default function GalleryPage() {
                       key={tag}
                       onClick={() => { setActiveTags((prev) => active ? prev.filter((t) => t !== tag) : [...prev, tag]); setPage(1); }}
                       style={{
-                        padding: '4px 12px',
+                        padding: '4px 11px',
                         borderRadius: '50px',
                         border: active ? '1px solid #8b5cf6' : '1px solid rgba(0,0,0,0.06)',
                         backgroundColor: active ? 'rgba(139,92,246,0.1)' : 'transparent',
                         color: active ? '#8b5cf6' : '#666',
-                        fontSize: '12px',
+                        fontSize: '11.5px',
                         fontWeight: active ? 600 : 500,
                         cursor: 'pointer',
                         fontFamily: 'inherit',
@@ -443,6 +452,7 @@ export default function GalleryPage() {
           </div>
         )}
       </div>
+      )}
 
       {error ? (
         <div style={{ marginBottom: '24px' }}>
