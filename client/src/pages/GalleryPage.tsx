@@ -17,7 +17,7 @@ import {
 } from '@fluentui/react-icons';
 import ComponentCard from '../components/ComponentCard';
 import ErrorBar from '../components/ErrorBar';
-import { fetchComponents, ComponentSummary, PaginatedResponse } from '../services/api';
+import { fetchComponents, ComponentSummary, PaginatedResponse, SECTOR_TAGS, TABLE_TAGS } from '../services/api';
 
 const useStyles = makeStyles({
   hero: {
@@ -247,6 +247,7 @@ export default function GalleryPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<'desc' | 'asc'>('desc');
+  const [activeTags, setActiveTags] = useState<string[]>([]);
   const [data, setData] = useState<PaginatedResponse<ComponentSummary> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
@@ -263,7 +264,7 @@ export default function GalleryPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchComponents(debouncedSearch, page, 12, sort);
+      const result = await fetchComponents(debouncedSearch, page, 12, sort, activeTags);
       setData(result);
     } catch (err) {
       console.error('Failed to load components:', err);
@@ -271,7 +272,7 @@ export default function GalleryPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, page, sort]);
+  }, [debouncedSearch, page, sort, activeTags]);
 
   useEffect(() => {
     loadData();
@@ -295,6 +296,82 @@ export default function GalleryPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+      </div>
+
+      {/* Tag filters */}
+      <div style={{ maxWidth: '700px', margin: '0 auto 32px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
+          {SECTOR_TAGS.map((tag) => {
+            const active = activeTags.includes(tag);
+            return (
+              <button
+                key={tag}
+                onClick={() => {
+                  setActiveTags((prev) => active ? prev.filter((t) => t !== tag) : [...prev, tag]);
+                  setPage(1);
+                }}
+                style={{
+                  padding: '5px 14px',
+                  borderRadius: '50px',
+                  border: active ? '1px solid #0078d4' : '1px solid rgba(0,0,0,0.06)',
+                  backgroundColor: active ? 'rgba(0,120,212,0.1)' : 'rgba(255,255,255,0.7)',
+                  color: active ? '#0078d4' : '#666',
+                  fontSize: '13px',
+                  fontWeight: active ? 600 : 500,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.15s',
+                  backdropFilter: 'blur(10px)',
+                }}
+              >{tag}</button>
+            );
+          })}
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
+          {TABLE_TAGS.map((tag) => {
+            const active = activeTags.includes(tag);
+            return (
+              <button
+                key={tag}
+                onClick={() => {
+                  setActiveTags((prev) => active ? prev.filter((t) => t !== tag) : [...prev, tag]);
+                  setPage(1);
+                }}
+                style={{
+                  padding: '5px 14px',
+                  borderRadius: '50px',
+                  border: active ? '1px solid #005a9e' : '1px solid rgba(0,0,0,0.06)',
+                  backgroundColor: active ? 'rgba(0,90,158,0.1)' : 'rgba(255,255,255,0.7)',
+                  color: active ? '#005a9e' : '#666',
+                  fontSize: '13px',
+                  fontWeight: active ? 600 : 500,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.15s',
+                  backdropFilter: 'blur(10px)',
+                }}
+              >{tag}</button>
+            );
+          })}
+        </div>
+        {activeTags.length > 0 && (
+          <div style={{ textAlign: 'center' }}>
+            <button
+              onClick={() => { setActiveTags([]); setPage(1); }}
+              style={{
+                padding: '4px 12px',
+                borderRadius: '50px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                color: '#d13438',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >Effacer les filtres ({activeTags.length})</button>
+          </div>
+        )}
       </div>
 
       {error ? (

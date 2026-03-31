@@ -1,5 +1,5 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { initDatabase, getComponentById, getScreenshotsByComponentId, deleteScreenshotsByComponentId, getFilesByComponentId, deleteFilesByComponentId, deleteComponentById } from '../database.js';
+import { initDatabase, getComponentById, getScreenshotsByComponentId, deleteScreenshotsByComponentId, getFilesByComponentId, deleteFilesByComponentId, deleteComponentById, deleteCommentsByComponentId } from '../database.js';
 import { deleteBlob } from '../storage.js';
 import { getUser } from '../auth.js';
 
@@ -60,6 +60,7 @@ app.http('deleteComponent', {
       // Delete from Table Storage
       await deleteFilesByComponentId(id!);
       await deleteScreenshotsByComponentId(id!);
+      await deleteCommentsByComponentId(id!);
       await deleteComponentById(id!);
 
       return { jsonBody: { message: 'Component deleted successfully' } };

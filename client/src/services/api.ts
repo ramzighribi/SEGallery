@@ -42,6 +42,7 @@ export interface ComponentSummary {
   author_name: string;
   created_at: string;
   thumbnail: string | null;
+  tags: string[];
   view_count: number;
   download_count: number;
   average_rating: number;
@@ -61,6 +62,7 @@ export interface ComponentDetail extends ComponentSummary {
   fileUrl: string;
   screenshots: { id: string; fileName: string; url: string }[];
   files: ComponentFile[];
+  user_rating: number | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -91,10 +93,12 @@ export async function fetchComponents(
   search: string = '',
   page: number = 1,
   limit: number = 12,
-  sort: 'desc' | 'asc' = 'desc'
+  sort: 'desc' | 'asc' = 'desc',
+  tags: string[] = []
 ): Promise<PaginatedResponse<ComponentSummary>> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit), sort });
   if (search) params.set('search', search);
+  if (tags.length > 0) params.set('tags', tags.join(','));
 
   const res = await fetch(`${API_BASE}/components?${params}`);
   if (!res.ok) await throwApiError(res, 'Failed to fetch components');
@@ -158,4 +162,73 @@ export async function rateComponent(id: string, rating: number): Promise<{ avera
   });
   if (!res.ok) await throwApiError(res, 'Failed to rate component');
   return res.json();
+}
+
+// --- Tags constants ---
+
+export const SECTOR_TAGS = [
+  'Services financiers',
+  'Distribution',
+  'Secteur public',
+  'Santé',
+  'Énergie',
+  'Industrie',
+  'Éducation',
+  'Autre secteur',
+];
+
+export const TABLE_TAGS = [
+  'Compte',
+  'Contact',
+  'Incident',
+  'Activités',
+  'Opportunité',
+  'Prospect',
+  'Conversation',
+  'Autre table',
+];
+
+export const ALL_TAGS = [...SECTOR_TAGS, ...TABLE_TAGS];
+
+// --- Comments ---
+
+export interface Comment {
+  id: string;
+  author_name: string;
+  author_id: string;
+  text: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function fetchComments(componentId: string): Promise<Comment[]> {
+  const res = await fetch(`${API_BASE}/components/${encodeURIComponent(componentId)}/comments`);
+  if (!res.ok) await throwApiError(res, 'Failed to fetch comments');
+  return res.json();
+}
+
+export async function createComment(componentId: string, text: string): Promise<Comment> {
+  const res = await fetch(`${API_BASE}/components/${encodeURIComponent(componentId)}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) await throwApiError(res, 'Failed to create comment');
+  return res.json();
+}
+
+export async function updateCommentApi(componentId: string, commentId: string, text: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/components/${encodeURIComponent(componentId)}/comments/${encodeURIComponent(commentId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) await throwApiError(res, 'Failed to update comment');
+}
+
+export async function deleteCommentApi(componentId: string, commentId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/components/${encodeURIComponent(componentId)}/comments/${encodeURIComponent(commentId)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) await throwApiError(res, 'Failed to delete comment');
 }

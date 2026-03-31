@@ -1,6 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { initDatabase, getComponentById, getScreenshotsByComponentId, getFilesByComponentId, incrementComponentField } from '../database.js';
+import { initDatabase, getComponentById, getScreenshotsByComponentId, getFilesByComponentId, incrementComponentField, getUserRating } from '../database.js';
 import { generateReadSasUrl } from '../storage.js';
+import { getUser } from '../auth.js';
 
 let dbInitialized = false;
 
@@ -54,6 +55,17 @@ app.http('getComponentById', {
         });
       }
 
+      // Get user's existing rating (if authenticated)
+      const user = getUser(req);
+      let userRating: number | null = null;
+      if (user) {
+        userRating = await getUserRating(id!, user.userId);
+      }
+
+      // Parse tags
+      let tags: string[] = [];
+      try { tags = JSON.parse(component.tags || '[]'); } catch { /* empty */ }
+
       return {
         jsonBody: {
           id: component.rowKey,
@@ -65,10 +77,12 @@ app.http('getComponentById', {
           author_id: component.author_id,
           created_at: component.created_at,
           updated_at: component.updated_at,
+          tags,
           view_count: viewCount,
           download_count: component.download_count || 0,
           average_rating: (component.rating_count || 0) > 0 ? (component.rating_sum || 0) / (component.rating_count || 0) : 0,
           rating_count: component.rating_count || 0,
+          user_rating: userRating,
           fileUrl: await generateReadSasUrl(component.file_blob_url),
           screenshots: screenshotResults,
           files: fileResults,

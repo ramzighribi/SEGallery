@@ -47,6 +47,7 @@ app.http('createComponent', {
       const { fields, files } = await parseMultipart(req);
       const title = fields.title?.trim();
       const description = fields.description?.trim();
+      const tags = fields.tags?.trim() || '[]';
 
       if (!title || !description) {
         return { status: 400, jsonBody: { error: 'Title and description are required' } };
@@ -54,6 +55,11 @@ app.http('createComponent', {
       if (title.length > 200) {
         return { status: 400, jsonBody: { error: 'Title must not exceed 200 characters' } };
       }
+
+      // Validate tags JSON
+      let parsedTags: string[] = [];
+      try { parsedTags = JSON.parse(tags); } catch { /* empty */ }
+      if (!Array.isArray(parsedTags)) parsedTags = [];
 
       const componentFile = files.find((f) => f.fieldName === 'file');
       const componentFiles = files.filter((f) => f.fieldName === 'file' || f.fieldName === 'files');
@@ -103,6 +109,7 @@ app.http('createComponent', {
         author_name: getUserName(user),
         author_email: getUserEmail(user),
         author_id: user.userId,
+        tags: JSON.stringify(parsedTags),
         created_at: now,
         updated_at: now,
         view_count: 0,

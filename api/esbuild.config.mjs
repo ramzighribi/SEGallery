@@ -30,15 +30,28 @@ await esbuild.build({
   sourcemap: false,
 });
 
+// Also bundle index entry point that imports all functions
+await esbuild.build({
+  entryPoints: ['./dist/index.js'],
+  bundle: true,
+  platform: 'node',
+  target: 'node20',
+  outfile: join(outDir, 'index.js'),
+  format: 'cjs',
+  external: ['@azure/functions-core'],
+  minify: true,
+  sourcemap: false,
+});
+
 // Copy host.json and package.json (minimal) to build dir
 cpSync('./host.json', join(outDir, 'host.json'));
 
-// Create minimal package.json for SWA language detection
+// Create minimal package.json
 const { writeFileSync } = await import('fs');
 writeFileSync(join(outDir, 'package.json'), JSON.stringify({
   name: 'segallery-api',
   version: '1.0.0',
-  main: 'functions/*.js',
+  main: 'index.js',
   scripts: { build: 'echo build done' }
 }, null, 2));
 

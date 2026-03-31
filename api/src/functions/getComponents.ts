@@ -16,8 +16,10 @@ app.http('getComponents', {
       const page = Math.max(1, parseInt(req.query.get('page') || '1'));
       const limit = Math.min(50, Math.max(1, parseInt(req.query.get('limit') || '12')));
       const sort = req.query.get('sort') === 'asc' ? 'asc' : 'desc';
+      const tagsParam = req.query.get('tags')?.trim() || '';
+      const tags = tagsParam ? tagsParam.split(',').map((t) => t.trim()).filter(Boolean) : [];
 
-      const { items, total } = await listComponents(search, page, limit, sort);
+      const { items, total } = await listComponents(search, page, limit, sort, tags);
 
       const result = [];
       for (const comp of items) {
@@ -31,6 +33,7 @@ app.http('getComponents', {
           author_name: comp.author_name,
           author_id: comp.author_id,
           created_at: comp.created_at,
+          tags: (() => { try { return JSON.parse(comp.tags || '[]'); } catch { return []; } })(),
           view_count: comp.view_count || 0,
           download_count: comp.download_count || 0,
           average_rating: (comp.rating_count || 0) > 0 ? (comp.rating_sum || 0) / (comp.rating_count || 0) : 0,

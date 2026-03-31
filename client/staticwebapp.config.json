@@ -10,6 +10,21 @@
       "allowedRoles": ["anonymous"]
     },
     {
+      "route": "/api/components/*/comments",
+      "methods": ["GET"],
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/components/*/comments",
+      "methods": ["POST"],
+      "allowedRoles": ["authenticated"]
+    },
+    {
+      "route": "/api/components/*/comments/*",
+      "methods": ["PUT", "DELETE"],
+      "allowedRoles": ["authenticated"]
+    },
+    {
       "route": "/api/components/*",
       "methods": ["GET"],
       "allowedRoles": ["anonymous"]

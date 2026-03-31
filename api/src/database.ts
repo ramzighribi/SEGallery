@@ -6,6 +6,7 @@ const COMPONENTS_TABLE = 'Components';
 const SCREENSHOTS_TABLE = 'Screenshots';
 const RATINGS_TABLE = 'Ratings';
 const FILES_TABLE = 'Files';
+const COMMENTS_TABLE = 'Comments';
 
 let tablesInitialized = false;
 
@@ -31,6 +32,10 @@ export function getFilesTable(): TableClient {
   return new TableClient(getTableUrl(), FILES_TABLE, credential);
 }
 
+export function getCommentsTable(): TableClient {
+  return new TableClient(getTableUrl(), COMMENTS_TABLE, credential);
+}
+
 export async function initDatabase(): Promise<void> {
   if (tablesInitialized) return;
   const svc = new TableServiceClient(getTableUrl(), credential);
@@ -39,6 +44,7 @@ export async function initDatabase(): Promise<void> {
   await svc.createTable(SCREENSHOTS_TABLE).catch(() => {});
   await svc.createTable(RATINGS_TABLE).catch(() => {});
   await svc.createTable(FILES_TABLE).catch(() => {});
+  await svc.createTable(COMMENTS_TABLE).catch(() => {});
   tablesInitialized = true;
 }
 
@@ -54,6 +60,7 @@ export interface ComponentEntity {
   author_name: string;
   author_email: string;
   author_id: string;
+  tags: string;           // JSON-serialized array of tag strings
   created_at: string;     // ISO string
   updated_at: string;
   view_count: number;
@@ -110,7 +117,7 @@ export async function deleteComponentById(id: string): Promise<void> {
   await table.deleteEntity('C', id);
 }
 
-export async function updateComponent(id: string, updates: Partial<Pick<ComponentEntity, 'title' | 'description' | 'file_name' | 'file_blob_url' | 'updated_at'>>): Promise<void> {
+export async function updateComponent(id: string, updates: Partial<Pick<ComponentEntity, 'title' | 'description' | 'file_name' | 'file_blob_url' | 'tags' | 'updated_at'>>): Promise<void> {
   const table = getComponentsTable();
   await table.updateEntity({ partitionKey: 'C', rowKey: id, ...updates }, 'Merge');
 }
@@ -124,7 +131,7 @@ export async function incrementComponentField(id: string, field: 'view_count' | 
   return updated;
 }
 
-export async function listComponents(search: string, page: number, limit: number, sort: 'asc' | 'desc' = 'desc'): Promise<{ items: ComponentEntity[]; total: number }> {
+export async function listComponents(search: string, page: number, limit: number, sort: 'asc' | 'desc' = 'desc', tags: string[] = []): Promise<{ items: ComponentEntity[]; total: number }> {
   const table = getComponentsTable();
   const all: ComponentEntity[] = [];
 
@@ -138,6 +145,12 @@ export async function listComponents(search: string, page: number, limit: number
         (entity.description || '').toLowerCase().includes(s) ||
         (entity.author_name || '').toLowerCase().includes(s);
       if (!match) continue;
+    }
+    if (tags.length > 0) {
+      let entityTags: string[] = [];
+      try { entityTags = JSON.parse(entity.tags || '[]'); } catch { /* empty */ }
+      const hasTag = tags.some((t) => entityTags.includes(t));
+      if (!hasTag) continue;
     }
     all.push(entity as unknown as ComponentEntity);
   }
@@ -299,4 +312,76 @@ export async function deleteFilesByComponentId(componentId: string): Promise<Fil
     await table.deleteEntity(componentId, f.rowKey);
   }
   return files;
+}
+
+// --- Comment helpers ---
+
+export interface CommentEntity {
+  partitionKey: string;   // component id
+  rowKey: string;         // comment id
+  author_name: string;
+  author_id: string;
+  text: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function insertComment(comment: Omit<CommentEntity, 'partitionKey'> & { component_id: string }): Promise<void> {
+  const table = getCommentsTable();
+  await table.createEntity({
+    partitionKey: comment.component_id,
+    rowKey: comment.rowKey,
+    author_name: comment.author_name,
+    author_id: comment.author_id,
+    text: comment.text,
+    created_at: comment.created_at,
+    updated_at: comment.updated_at,
+  });
+}
+
+export async function getCommentsByComponentId(componentId: string): Promise<CommentEntity[]> {
+  const table = getCommentsTable();
+  const results: CommentEntity[] = [];
+  const iter = table.listEntities<CommentEntity>({
+    queryOptions: { filter: odata`PartitionKey eq ${componentId}` },
+  });
+  for await (const entity of iter) {
+    results.push(entity as unknown as CommentEntity);
+  }
+  results.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+  return results;
+}
+
+export async function getCommentById(componentId: string, commentId: string): Promise<CommentEntity | null> {
+  const table = getCommentsTable();
+  try {
+    const entity = await table.getEntity(componentId, commentId);
+    return entity as unknown as CommentEntity;
+  } catch (e: any) {
+    if (e.statusCode === 404) return null;
+    throw e;
+  }
+}
+
+export async function updateCommentText(componentId: string, commentId: string, text: string): Promise<void> {
+  const table = getCommentsTable();
+  await table.updateEntity({
+    partitionKey: componentId,
+    rowKey: commentId,
+    text,
+    updated_at: new Date().toISOString(),
+  }, 'Merge');
+}
+
+export async function deleteComment(componentId: string, commentId: string): Promise<void> {
+  const table = getCommentsTable();
+  await table.deleteEntity(componentId, commentId);
+}
+
+export async function deleteCommentsByComponentId(componentId: string): Promise<void> {
+  const comments = await getCommentsByComponentId(componentId);
+  const table = getCommentsTable();
+  for (const c of comments) {
+    await table.deleteEntity(componentId, c.rowKey);
+  }
 }

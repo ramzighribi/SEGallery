@@ -74,6 +74,15 @@ app.http('updateComponent', {
       const now = new Date().toISOString();
       const updates: Record<string, string> = { title, description, updated_at: now };
 
+      // Handle tags
+      const tagsStr = fields.tags?.trim();
+      if (tagsStr !== undefined) {
+        let parsedTags: string[] = [];
+        try { parsedTags = JSON.parse(tagsStr); } catch { /* empty */ }
+        if (!Array.isArray(parsedTags)) parsedTags = [];
+        updates.tags = JSON.stringify(parsedTags);
+      }
+
       // Handle optional new file(s)
       const componentFiles = files.filter((f) => f.fieldName === 'file' || f.fieldName === 'files');
       if (componentFiles.length > 0) {

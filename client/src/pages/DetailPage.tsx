@@ -30,7 +30,7 @@ import {
   StarFilled,
   EditRegular,
 } from '@fluentui/react-icons';
-import { fetchComponentById, deleteComponent, trackDownload, rateComponent, updateComponent, formatAuthorName, getDownloadUrl, ComponentDetail, ComponentFile } from '../services/api';
+import { fetchComponentById, deleteComponent, trackDownload, rateComponent, updateComponent, formatAuthorName, getDownloadUrl, ComponentDetail, ComponentFile, fetchComments, createComment, updateCommentApi, deleteCommentApi, Comment, SECTOR_TAGS, TABLE_TAGS } from '../services/api';
 import { getAuthInfo, SwaUser } from '../services/auth';
 import ErrorBar from '../components/ErrorBar';
 import RichTextEditor from '../components/RichTextEditor';
@@ -635,9 +635,15 @@ export default function DetailPage() {
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editFiles, setEditFiles] = useState<File[]>([]);
+  const [editTags, setEditTags] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<SwaUser | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
 
   useEffect(() => {
     getAuthInfo().then((info) => setUser(info.clientPrincipal));
@@ -654,12 +660,14 @@ export default function DetailPage() {
         setDownloadCount(c.download_count || 0);
         setAverageRating(c.average_rating || 0);
         setRatingCount(c.rating_count || 0);
+        if (c.user_rating) setUserRating(c.user_rating);
       })
       .catch((err) => {
         setError(err);
         setComponent(null);
       })
       .finally(() => setLoading(false));
+    fetchComments(id).then(setComments).catch(() => {});
   }, [id]);
 
   const handleDownload = async (fileId?: string, fileName?: string) => {
@@ -679,6 +687,7 @@ export default function DetailPage() {
     setEditTitle(component.title);
     setEditDescription(component.description);
     setEditFiles([]);
+    setEditTags(component.tags || []);
     setEditing(true);
   };
 
@@ -694,6 +703,7 @@ export default function DetailPage() {
       const formData = new FormData();
       formData.append('title', editTitle.trim());
       formData.append('description', editDescription.trim());
+      formData.append('tags', JSON.stringify(editTags));
       if (editFiles.length > 0) {
         editFiles.forEach((f) => formData.append('files', f));
       }
@@ -794,6 +804,23 @@ export default function DetailPage() {
           <div className={styles.titleRow}>
             <div className={styles.titleLeft}>
               <h1 className={styles.title}>{component.title}</h1>
+              {component.tags && component.tags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+                  {component.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: '50px',
+                        backgroundColor: SECTOR_TAGS.includes(tag) ? 'rgba(0,120,212,0.08)' : 'rgba(0,90,158,0.08)',
+                        color: SECTOR_TAGS.includes(tag) ? '#0078d4' : '#005a9e',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                      }}
+                    >{tag}</span>
+                  ))}
+                </div>
+              )}
               <div className={styles.description} dangerouslySetInnerHTML={{ __html: component.description }} />
 
               <div className={styles.statsRow}>
@@ -1100,6 +1127,187 @@ export default function DetailPage() {
         </div>
       )}
 
+      {/* Comments section */}
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTitle}>Commentaires</span>
+          <span className={styles.sectionCount}>{comments.length}</span>
+        </div>
+
+        {user && (
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            marginBottom: '20px',
+          }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #0078d4, #005a9e)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 700,
+              flexShrink: 0,
+            }}>
+              {formatAuthorName(user.userDetails).charAt(0).toUpperCase()}
+            </div>
+            <div style={{ flex: 1 }}>
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Ajouter un commentaire..."
+                maxLength={2000}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  minHeight: '60px',
+                  outline: 'none',
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                <Button
+                  appearance="primary"
+                  size="small"
+                  disabled={!newComment.trim() || submittingComment}
+                  onClick={async () => {
+                    if (!id || !newComment.trim()) return;
+                    setSubmittingComment(true);
+                    try {
+                      const comment = await createComment(id, newComment.trim());
+                      setComments((prev) => [...prev, comment]);
+                      setNewComment('');
+                    } catch (err) { setError(err); }
+                    finally { setSubmittingComment(false); }
+                  }}
+                >
+                  {submittingComment ? 'Envoi...' : 'Commenter'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {comments.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '24px', color: '#888', fontSize: '14px' }}>
+            Aucun commentaire pour le moment. {user ? 'Soyez le premier !' : 'Connectez-vous pour commenter.'}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {comments.map((c) => {
+            const isCommentOwner = user && c.author_id === user.userId;
+            const isEditing = editingCommentId === c.id;
+            const initials = formatAuthorName(c.author_name).charAt(0).toUpperCase();
+            const relativeDate = (() => {
+              const diff = Date.now() - new Date(c.created_at).getTime();
+              const mins = Math.floor(diff / 60000);
+              if (mins < 1) return "à l'instant";
+              if (mins < 60) return `il y a ${mins} min`;
+              const hours = Math.floor(mins / 60);
+              if (hours < 24) return `il y a ${hours}h`;
+              const days = Math.floor(hours / 24);
+              if (days < 30) return `il y a ${days}j`;
+              return new Date(c.created_at).toLocaleDateString('fr-FR');
+            })();
+
+            return (
+              <div key={c.id} style={{
+                display: 'flex',
+                gap: '12px',
+                padding: '12px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(0,0,0,0.015)',
+              }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #50e6ff, #0078d4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}>
+                  {initials}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 600 }}>{formatAuthorName(c.author_name)}</span>
+                    <span style={{ fontSize: '12px', color: '#888' }}>{relativeDate}</span>
+                    {c.updated_at !== c.created_at && (
+                      <span style={{ fontSize: '11px', color: '#aaa', fontStyle: 'italic' }}>(modifié)</span>
+                    )}
+                  </div>
+                  {isEditing ? (
+                    <div>
+                      <textarea
+                        value={editingCommentText}
+                        onChange={(e) => setEditingCommentText(e.target.value)}
+                        maxLength={2000}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(0,120,212,0.3)',
+                          fontSize: '14px',
+                          fontFamily: 'inherit',
+                          resize: 'vertical',
+                          minHeight: '50px',
+                          outline: 'none',
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                        <Button size="small" appearance="primary" onClick={async () => {
+                          if (!id) return;
+                          try {
+                            await updateCommentApi(id, c.id, editingCommentText.trim());
+                            setComments((prev) => prev.map((x) => x.id === c.id ? { ...x, text: editingCommentText.trim(), updated_at: new Date().toISOString() } : x));
+                            setEditingCommentId(null);
+                          } catch (err) { setError(err); }
+                        }}>Enregistrer</Button>
+                        <Button size="small" appearance="secondary" onClick={() => setEditingCommentId(null)}>Annuler</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '14px', lineHeight: 1.6, color: '#333', whiteSpace: 'pre-wrap' }}>{c.text}</div>
+                  )}
+                  {isCommentOwner && !isEditing && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                      <button
+                        onClick={() => { setEditingCommentId(c.id); setEditingCommentText(c.text); }}
+                        style={{ border: 'none', background: 'none', color: '#0078d4', fontSize: '12px', fontWeight: 500, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                      >Modifier</button>
+                      <button
+                        onClick={async () => {
+                          if (!id || !confirm('Supprimer ce commentaire ?')) return;
+                          try {
+                            await deleteCommentApi(id, c.id);
+                            setComments((prev) => prev.filter((x) => x.id !== c.id));
+                          } catch (err) { setError(err); }
+                        }}
+                        style={{ border: 'none', background: 'none', color: '#d13438', fontSize: '12px', fontWeight: 500, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                      >Supprimer</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Edit dialog */}
       {editing && (
         <div className={styles.editOverlay} onClick={() => setEditing(false)}>
@@ -1153,6 +1361,55 @@ export default function DetailPage() {
                   ))}
                 </div>
               )}
+            </div>
+            <div className={styles.editField}>
+              <label className={styles.editLabel}>Tags</label>
+              <div style={{ marginBottom: '6px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#555', marginBottom: '4px' }}>Secteur</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {SECTOR_TAGS.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setEditTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '50px',
+                        border: editTags.includes(tag) ? '1px solid #0078d4' : '1px solid rgba(0,0,0,0.08)',
+                        backgroundColor: editTags.includes(tag) ? 'rgba(0,120,212,0.1)' : 'transparent',
+                        color: editTags.includes(tag) ? '#0078d4' : '#555',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >{tag}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#555', marginBottom: '4px' }}>Table Dataverse</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {TABLE_TAGS.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setEditTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '50px',
+                        border: editTags.includes(tag) ? '1px solid #005a9e' : '1px solid rgba(0,0,0,0.08)',
+                        backgroundColor: editTags.includes(tag) ? 'rgba(0,90,158,0.1)' : 'transparent',
+                        color: editTags.includes(tag) ? '#005a9e' : '#555',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >{tag}</button>
+                  ))}
+                </div>
+              </div>
             </div>
             {error ? (
               <div style={{ marginBottom: '16px' }}>

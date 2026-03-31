@@ -15,7 +15,7 @@ import {
   CheckmarkCircleRegular,
   PersonRegular,
 } from '@fluentui/react-icons';
-import { createComponent } from '../services/api';
+import { createComponent, SECTOR_TAGS, TABLE_TAGS } from '../services/api';
 import { getAuthInfo, loginUrl, SwaUser } from '../services/auth';
 import ErrorBar from '../components/ErrorBar';
 import RichTextEditor from '../components/RichTextEditor';
@@ -392,6 +392,7 @@ export default function UploadPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [files, setFiles] = useState<File[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [screenshots, setScreenshots] = useState<File[]>([]);
   const [screenshotPreviews, setScreenshotPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -498,6 +499,7 @@ export default function UploadPage() {
       const formData = new FormData();
       formData.append('title', title.trim());
       formData.append('description', description.trim());
+      formData.append('tags', JSON.stringify(selectedTags));
       files.forEach((f) => formData.append('files', f));
       screenshots.forEach((s) => formData.append('screenshots', s));
 
@@ -579,6 +581,59 @@ export default function UploadPage() {
               onChange={setDescription}
               placeholder="Décrivez votre composant : fonctionnalités, cas d'usage, dépendances..."
             />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Tags</label>
+            <span className={styles.hint}>Sélectionnez les tags correspondant à votre composant</span>
+            <div style={{ marginBottom: '8px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>Secteur</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {SECTOR_TAGS.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '50px',
+                      border: selectedTags.includes(tag) ? '1px solid #0078d4' : '1px solid rgba(0,0,0,0.08)',
+                      backgroundColor: selectedTags.includes(tag) ? 'rgba(0,120,212,0.1)' : 'rgba(255,255,255,0.6)',
+                      color: selectedTags.includes(tag) ? '#0078d4' : '#555',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.15s',
+                    }}
+                  >{tag}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>Table Dataverse</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {TABLE_TAGS.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '50px',
+                      border: selectedTags.includes(tag) ? '1px solid #005a9e' : '1px solid rgba(0,0,0,0.08)',
+                      backgroundColor: selectedTags.includes(tag) ? 'rgba(0,90,158,0.1)' : 'rgba(255,255,255,0.6)',
+                      color: selectedTags.includes(tag) ? '#005a9e' : '#555',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.15s',
+                    }}
+                  >{tag}</button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className={styles.field}>
