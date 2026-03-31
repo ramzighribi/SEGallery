@@ -14,6 +14,9 @@ import {
   ChevronRightRegular,
   ArrowSortDownRegular,
   ArrowSortUpRegular,
+  FilterRegular,
+  ChevronDownRegular,
+  ChevronUpRegular,
 } from '@fluentui/react-icons';
 import ComponentCard from '../components/ComponentCard';
 import ErrorBar from '../components/ErrorBar';
@@ -248,6 +251,7 @@ export default function GalleryPage() {
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<'desc' | 'asc'>('desc');
   const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [data, setData] = useState<PaginatedResponse<ComponentSummary> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
@@ -299,83 +303,135 @@ export default function GalleryPage() {
       </div>
 
       {/* Tag filters */}
-      <div style={{ maxWidth: '700px', margin: '0 auto 32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '8px', textAlign: 'center' as const }}>Secteur</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
-          {SECTOR_TAGS.map((tag) => {
-            const active = activeTags.includes(tag);
-            return (
-              <button
-                key={tag}
-                onClick={() => {
-                  setActiveTags((prev) => active ? prev.filter((t) => t !== tag) : [...prev, tag]);
-                  setPage(1);
-                }}
-                style={{
-                  padding: '5px 14px',
-                  borderRadius: '50px',
-                  border: active ? '1px solid #0078d4' : '1px solid rgba(0,0,0,0.06)',
-                  backgroundColor: active ? 'rgba(0,120,212,0.1)' : 'rgba(255,255,255,0.7)',
-                  color: active ? '#0078d4' : '#666',
-                  fontSize: '13px',
-                  fontWeight: active ? 600 : 500,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.15s',
-                  backdropFilter: 'blur(10px)',
-                }}
-              >{tag}</button>
-            );
-          })}
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '8px', textAlign: 'center' as const }}>Table Dataverse</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center' }}>
-          {TABLE_TAGS.map((tag) => {
-            const active = activeTags.includes(tag);
-            return (
-              <button
-                key={tag}
-                onClick={() => {
-                  setActiveTags((prev) => active ? prev.filter((t) => t !== tag) : [...prev, tag]);
-                  setPage(1);
-                }}
-                style={{
-                  padding: '5px 14px',
-                  borderRadius: '50px',
-                  border: active ? '1px solid #005a9e' : '1px solid rgba(0,0,0,0.06)',
-                  backgroundColor: active ? 'rgba(0,90,158,0.1)' : 'rgba(255,255,255,0.7)',
-                  color: active ? '#005a9e' : '#666',
-                  fontSize: '13px',
-                  fontWeight: active ? 600 : 500,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.15s',
-                  backdropFilter: 'blur(10px)',
-                }}
-              >{tag}</button>
-            );
-          })}
-          </div>
-        </div>
-        {activeTags.length > 0 && (
-          <div style={{ textAlign: 'center' }}>
-            <button
-              onClick={() => { setActiveTags([]); setPage(1); }}
+      <div style={{ maxWidth: '700px', margin: '0 auto 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setFiltersOpen((v) => !v)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 16px',
+              borderRadius: '50px',
+              border: activeTags.length > 0 ? '1px solid #0078d4' : '1px solid rgba(0,0,0,0.08)',
+              backgroundColor: activeTags.length > 0 ? 'rgba(0,120,212,0.08)' : 'rgba(255,255,255,0.7)',
+              color: activeTags.length > 0 ? '#0078d4' : '#666',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'all 0.15s',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <FilterRegular fontSize={14} />
+            Filtres
+            {activeTags.length > 0 && (
+              <span style={{
+                backgroundColor: '#0078d4',
+                color: 'white',
+                borderRadius: '50%',
+                width: '18px',
+                height: '18px',
+                fontSize: '11px',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>{activeTags.length}</span>
+            )}
+            {filtersOpen ? <ChevronUpRegular fontSize={12} /> : <ChevronDownRegular fontSize={12} />}
+          </button>
+          {activeTags.map((tag) => (
+            <span
+              key={tag}
+              onClick={() => { setActiveTags((prev) => prev.filter((t) => t !== tag)); setPage(1); }}
               style={{
-                padding: '4px 12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 10px',
                 borderRadius: '50px',
-                border: 'none',
-                backgroundColor: 'transparent',
-                color: '#d13438',
+                backgroundColor: SECTOR_TAGS.includes(tag) ? 'rgba(0,120,212,0.1)' : 'rgba(0,90,158,0.1)',
+                color: SECTOR_TAGS.includes(tag) ? '#0078d4' : '#005a9e',
                 fontSize: '12px',
-                fontWeight: 500,
+                fontWeight: 600,
                 cursor: 'pointer',
                 fontFamily: 'inherit',
               }}
-            >Effacer les filtres ({activeTags.length})</button>
+            >{tag} ×</span>
+          ))}
+          {activeTags.length > 1 && (
+            <button
+              onClick={() => { setActiveTags([]); setPage(1); }}
+              style={{ border: 'none', background: 'none', color: '#d13438', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', padding: '4px 8px' }}
+            >Tout effacer</button>
+          )}
+        </div>
+        {filtersOpen && (
+          <div style={{
+            marginTop: '12px',
+            padding: '16px 20px',
+            borderRadius: '16px',
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(0,0,0,0.06)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+          }}>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '6px' }}>Secteur</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {SECTOR_TAGS.map((tag) => {
+                  const active = activeTags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => { setActiveTags((prev) => active ? prev.filter((t) => t !== tag) : [...prev, tag]); setPage(1); }}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: '50px',
+                        border: active ? '1px solid #0078d4' : '1px solid rgba(0,0,0,0.06)',
+                        backgroundColor: active ? 'rgba(0,120,212,0.1)' : 'transparent',
+                        color: active ? '#0078d4' : '#666',
+                        fontSize: '12px',
+                        fontWeight: active ? 600 : 500,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        transition: 'all 0.15s',
+                      }}
+                    >{tag}</button>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '6px' }}>Table Dataverse</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {TABLE_TAGS.map((tag) => {
+                  const active = activeTags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => { setActiveTags((prev) => active ? prev.filter((t) => t !== tag) : [...prev, tag]); setPage(1); }}
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: '50px',
+                        border: active ? '1px solid #005a9e' : '1px solid rgba(0,0,0,0.06)',
+                        backgroundColor: active ? 'rgba(0,90,158,0.1)' : 'transparent',
+                        color: active ? '#005a9e' : '#666',
+                        fontSize: '12px',
+                        fontWeight: active ? 600 : 500,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        transition: 'all 0.15s',
+                      }}
+                    >{tag}</button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </div>
