@@ -14,6 +14,9 @@ import {
   DocumentRegular,
   CheckmarkCircleRegular,
   PersonRegular,
+  TagRegular,
+  ChevronDownRegular,
+  ChevronUpRegular,
 } from '@fluentui/react-icons';
 import { createComponent, SECTOR_TAGS, TABLE_TAGS } from '../services/api';
 import { getAuthInfo, loginUrl, SwaUser } from '../services/auth';
@@ -32,6 +35,12 @@ const useStyles = makeStyles({
     color: tokens.colorNeutralForeground1,
     marginBottom: '8px',
   },
+  pageTitleGradient: {
+    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  },
   pageSubtitle: {
     fontSize: '15px',
     color: tokens.colorNeutralForeground3,
@@ -39,12 +48,12 @@ const useStyles = makeStyles({
   },
   card: {
     backgroundColor: 'rgba(255, 255, 255, 0.72)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    ...shorthands.borderRadius('20px'),
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    ...shorthands.borderRadius('24px'),
     ...shorthands.border('1px', 'solid', 'rgba(255, 255, 255, 0.5)'),
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.06)',
-    ...shorthands.padding('32px'),
+    boxShadow: '0 8px 40px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.02)',
+    ...shorthands.padding('36px'),
   },
   form: {
     display: 'flex',
@@ -280,17 +289,20 @@ const useStyles = makeStyles({
     ...shorthands.padding('16px'),
     ...shorthands.borderRadius('14px'),
     ...shorthands.border('0'),
-    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #4f46e5 100%)',
+    backgroundSize: '200% auto',
     color: 'white',
     fontSize: '16px',
     fontWeight: '600',
     cursor: 'pointer',
     transitionDuration: '0.3s',
     transitionProperty: 'all',
-    boxShadow: '0 4px 16px rgba(99, 102, 241, 0.3)',
+    boxShadow: '0 4px 20px rgba(99, 102, 241, 0.35)',
     fontFamily: 'inherit',
+    letterSpacing: '-0.01em',
     ':hover': {
-      boxShadow: '0 6px 24px rgba(99, 102, 241, 0.4)',
+      backgroundPosition: 'right center',
+      boxShadow: '0 8px 28px rgba(99, 102, 241, 0.45)',
       transform: 'translateY(-2px)',
     },
   },
@@ -303,13 +315,14 @@ const useStyles = makeStyles({
     ...shorthands.padding('16px'),
     ...shorthands.borderRadius('14px'),
     ...shorthands.border('0'),
-    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #4f46e5 100%)',
     color: 'white',
     fontSize: '16px',
     fontWeight: '600',
-    opacity: 0.6,
+    opacity: 0.5,
     cursor: 'default',
     fontFamily: 'inherit',
+    letterSpacing: '-0.01em',
   },
   loginCard: {
     textAlign: 'center' as const,
@@ -365,12 +378,12 @@ const useStyles = makeStyles({
     width: '64px',
     height: '64px',
     ...shorthands.borderRadius('50%'),
-    background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.1), rgba(0, 120, 212, 0.1))',
+    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(52, 211, 153, 0.12))',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     ...shorthands.margin('0', 'auto', '20px'),
-    color: '#34c759',
+    color: '#10b981',
   },
   successTitle: {
     fontSize: '20px',
@@ -399,6 +412,7 @@ export default function UploadPage() {
   const [error, setError] = useState<unknown>(null);
   const [success, setSuccess] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const screenshotInputRef = useRef<HTMLInputElement>(null);
@@ -548,7 +562,7 @@ export default function UploadPage() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.pageTitle}>Publier un composant</h1>
+      <h1 className={styles.pageTitle}>Publier un <span className={styles.pageTitleGradient}>composant</span></h1>
       <p className={styles.pageSubtitle}>Partagez votre composant avec les équipes SE</p>
 
       {error ? (
@@ -585,55 +599,140 @@ export default function UploadPage() {
 
           <div className={styles.field}>
             <label className={styles.label}>Tags</label>
-            <span className={styles.hint}>Sélectionnez les tags correspondant à votre composant</span>
-            <div style={{ marginBottom: '8px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>Secteur</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {SECTOR_TAGS.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '50px',
-                      border: selectedTags.includes(tag) ? '1px solid #6366f1' : '1px solid rgba(0,0,0,0.08)',
-                      backgroundColor: selectedTags.includes(tag) ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.6)',
-                      color: selectedTags.includes(tag) ? '#6366f1' : '#555',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      transition: 'all 0.15s',
-                    }}
-                  >{tag}</button>
-                ))}
-              </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setTagsOpen((v) => !v)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 16px',
+                  borderRadius: '50px',
+                  border: selectedTags.length > 0 ? '1px solid #6366f1' : '1px solid rgba(0,0,0,0.08)',
+                  backgroundColor: selectedTags.length > 0 ? 'rgba(99,102,241,0.08)' : 'rgba(255,255,255,0.6)',
+                  color: selectedTags.length > 0 ? '#6366f1' : '#666',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <TagRegular fontSize={14} />
+                Sélectionner des tags
+                {selectedTags.length > 0 && (
+                  <span style={{
+                    backgroundColor: '#6366f1',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: '18px',
+                    height: '18px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>{selectedTags.length}</span>
+                )}
+                {tagsOpen ? <ChevronUpRegular fontSize={12} /> : <ChevronDownRegular fontSize={12} />}
+              </button>
+              {selectedTags.map((tag) => (
+                <span
+                  key={tag}
+                  onClick={() => setSelectedTags((prev) => prev.filter((t) => t !== tag))}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '5px 10px',
+                    borderRadius: '50px',
+                    backgroundColor: SECTOR_TAGS.includes(tag) ? 'rgba(99,102,241,0.1)' : 'rgba(139,92,246,0.1)',
+                    color: SECTOR_TAGS.includes(tag) ? '#6366f1' : '#8b5cf6',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >{tag} ×</span>
+              ))}
+              {selectedTags.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedTags([])}
+                  style={{ border: 'none', background: 'none', color: '#f43f5e', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', padding: '4px 8px' }}
+                >Tout effacer</button>
+              )}
             </div>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#555', marginBottom: '6px' }}>Table Dataverse</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {TABLE_TAGS.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '50px',
-                      border: selectedTags.includes(tag) ? '1px solid #8b5cf6' : '1px solid rgba(0,0,0,0.08)',
-                      backgroundColor: selectedTags.includes(tag) ? 'rgba(139,92,246,0.1)' : 'rgba(255,255,255,0.6)',
-                      color: selectedTags.includes(tag) ? '#8b5cf6' : '#555',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      transition: 'all 0.15s',
-                    }}
-                  >{tag}</button>
-                ))}
+            {tagsOpen && (
+              <div style={{
+                marginTop: '8px',
+                padding: '14px 18px',
+                borderRadius: '14px',
+                backgroundColor: 'rgba(255,255,255,0.6)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(0,0,0,0.06)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                animation: 'slideDown 0.2s ease-out',
+              }}>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '6px' }}>Secteur</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                    {SECTOR_TAGS.map((tag) => {
+                      const active = selectedTags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => setSelectedTags((prev) => active ? prev.filter((t) => t !== tag) : [...prev, tag])}
+                          style={{
+                            padding: '5px 12px',
+                            borderRadius: '50px',
+                            border: active ? '1px solid #6366f1' : '1px solid rgba(0,0,0,0.06)',
+                            backgroundColor: active ? 'rgba(99,102,241,0.1)' : 'transparent',
+                            color: active ? '#6366f1' : '#666',
+                            fontSize: '12px',
+                            fontWeight: active ? 600 : 500,
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                            transition: 'all 0.15s',
+                          }}
+                        >{tag}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '6px' }}>Table Dataverse</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                    {TABLE_TAGS.map((tag) => {
+                      const active = selectedTags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => setSelectedTags((prev) => active ? prev.filter((t) => t !== tag) : [...prev, tag])}
+                          style={{
+                            padding: '5px 12px',
+                            borderRadius: '50px',
+                            border: active ? '1px solid #8b5cf6' : '1px solid rgba(0,0,0,0.06)',
+                            backgroundColor: active ? 'rgba(139,92,246,0.1)' : 'transparent',
+                            color: active ? '#8b5cf6' : '#666',
+                            fontSize: '12px',
+                            fontWeight: active ? 600 : 500,
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                            transition: 'all 0.15s',
+                          }}
+                        >{tag}</button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className={styles.field}>
