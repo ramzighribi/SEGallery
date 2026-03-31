@@ -198,7 +198,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <header className={styles.header}>
         <div className={styles.headerLeft} onClick={() => navigate('/')}>
           <div className={styles.logoIcon}>SE</div>
-          <span className={styles.logoText}>Gallery</span>
+          <span className={styles.logoText}>Component Gallery</span>
         </div>
 
         <nav className={styles.nav}>
