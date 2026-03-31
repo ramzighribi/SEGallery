@@ -1,20 +1,25 @@
 /* ─── SEGallery Modern Design System — Microsoft Fluent ─── */
 
 :root {
-  --gradient-primary: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
-  --gradient-accent: linear-gradient(135deg, #50e6ff 0%, #d13438 100%);
-  --gradient-hero: linear-gradient(135deg, #0078d4 0%, #005a9e 50%, #50e6ff 100%);
-  --gradient-card-hover: linear-gradient(135deg, rgba(0, 120, 212, 0.15), rgba(0, 90, 158, 0.15));
+  --gradient-primary: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  --gradient-accent: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+  --gradient-hero: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #8b5cf6 100%);
+  --gradient-card-hover: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(79, 70, 229, 0.15));
   --gradient-mesh: 
-    radial-gradient(at 20% 20%, rgba(0, 120, 212, 0.08) 0%, transparent 50%),
-    radial-gradient(at 80% 80%, rgba(0, 90, 158, 0.06) 0%, transparent 50%),
-    radial-gradient(at 50% 50%, rgba(80, 230, 255, 0.04) 0%, transparent 50%);
+    radial-gradient(at 20% 20%, rgba(99, 102, 241, 0.07) 0%, transparent 50%),
+    radial-gradient(at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
   --glass-bg: rgba(255, 255, 255, 0.72);
   --glass-border: rgba(255, 255, 255, 0.5);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
   --surface-bg: #f8f9fc;
   --card-radius: 16px;
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --color-primary: #6366f1;
+  --color-primary-dark: #4f46e5;
+  --color-emerald: #10b981;
+  --color-amber: #f59e0b;
+  --color-rose: #f43f5e;
 }
 
 * {
@@ -95,17 +100,17 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 120, 212, 0.3);
+  background: rgba(99, 102, 241, 0.3);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 120, 212, 0.5);
+  background: rgba(99, 102, 241, 0.5);
 }
 
 /* ─── Selection ─── */
 ::selection {
-  background-color: rgba(0, 120, 212, 0.2);
+  background-color: rgba(99, 102, 241, 0.2);
   color: inherit;
 }
 
@@ -113,21 +118,21 @@ html, body {
 .quill {
   border-radius: 12px;
   overflow: hidden;
-  border: 1.5px solid rgba(0, 120, 212, 0.18);
+  border: 1.5px solid rgba(99, 102, 241, 0.18);
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(8px);
   transition: var(--transition-smooth);
 }
 
 .quill:focus-within {
-  border-color: #0078d4;
-  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.12);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 .ql-toolbar.ql-snow {
   border: none !important;
-  border-bottom: 1px solid rgba(0, 120, 212, 0.12) !important;
-  background: rgba(0, 120, 212, 0.04);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.12) !important;
+  background: rgba(99, 102, 241, 0.04);
   font-family: 'Segoe UI Variable', 'Segoe UI', sans-serif;
 }
 
@@ -163,17 +168,17 @@ html, body {
 
 .ql-snow .ql-active .ql-stroke,
 .ql-snow .ql-picker-label.ql-active .ql-stroke {
-  stroke: #0078d4 !important;
+  stroke: #6366f1 !important;
 }
 
 .ql-snow .ql-active .ql-fill,
 .ql-snow .ql-picker-label.ql-active .ql-fill {
-  fill: #0078d4 !important;
+  fill: #6366f1 !important;
 }
 
 .ql-snow .ql-active,
 .ql-snow .ql-picker-label.ql-active {
-  color: #0078d4 !important;
+  color: #6366f1 !important;
 }
 
 /* Rendered rich text in detail page */
@@ -191,7 +196,7 @@ html, body {
 }
 
 .ql-rendered a {
-  color: #0078d4;
+  color: #6366f1;
   text-decoration: none;
 }
 

@@ -23,12 +23,14 @@ import {
   CalendarRegular,
   DocumentRegular,
   DismissRegular,
-  EyeRegular,
+  DataTrendingRegular,
   ChevronLeftRegular,
   ChevronRightRegular,
   StarRegular,
   StarFilled,
   EditRegular,
+  ArrowTrendingRegular,
+  HeartRegular,
 } from '@fluentui/react-icons';
 import { fetchComponentById, deleteComponent, trackDownload, rateComponent, updateComponent, formatAuthorName, getDownloadUrl, ComponentDetail, ComponentFile, fetchComments, createComment, updateCommentApi, deleteCommentApi, Comment, SECTOR_TAGS, TABLE_TAGS } from '../services/api';
 import { getAuthInfo, SwaUser } from '../services/auth';
@@ -149,13 +151,13 @@ const useStyles = makeStyles({
     flexShrink: 0,
   },
   statIconViews: {
-    background: 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)',
+    background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)',
   },
   statIconDownloads: {
-    background: 'linear-gradient(135deg, #50e6ff 0%, #d13438 100%)',
+    background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
   },
   statIconRating: {
-    background: 'linear-gradient(135deg, #ffb900 0%, #ff8c00 100%)',
+    background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
   },
   statInfo: {
     display: 'flex',
@@ -204,15 +206,15 @@ const useStyles = makeStyles({
     gap: '6px',
     ...shorthands.padding('6px', '14px'),
     ...shorthands.borderRadius('50px'),
-    backgroundColor: 'rgba(0, 120, 212, 0.08)',
-    color: '#0078d4',
+    backgroundColor: 'rgba(99, 102, 241, 0.08)',
+    color: '#6366f1',
     fontSize: '13px',
     fontWeight: '500',
     textDecoration: 'none',
     transitionDuration: '0.2s',
     transitionProperty: 'background-color',
     ':hover': {
-      backgroundColor: 'rgba(0, 120, 212, 0.15)',
+      backgroundColor: 'rgba(99, 102, 241, 0.15)',
     },
   },
   actions: {
@@ -231,18 +233,18 @@ const useStyles = makeStyles({
     ...shorthands.padding('14px', '28px'),
     ...shorthands.borderRadius('14px'),
     ...shorthands.border('0'),
-    background: 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)',
+    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
     color: 'white',
     fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',
     transitionDuration: '0.3s',
     transitionProperty: 'all',
-    boxShadow: '0 4px 16px rgba(0, 120, 212, 0.3)',
+    boxShadow: '0 4px 16px rgba(99, 102, 241, 0.3)',
     textDecoration: 'none',
     fontFamily: 'inherit',
     ':hover': {
-      boxShadow: '0 6px 24px rgba(0, 120, 212, 0.4)',
+      boxShadow: '0 6px 24px rgba(99, 102, 241, 0.4)',
       transform: 'translateY(-2px)',
     },
   },
@@ -253,9 +255,9 @@ const useStyles = makeStyles({
     gap: '6px',
     ...shorthands.padding('10px', '20px'),
     ...shorthands.borderRadius('12px'),
-    ...shorthands.border('1px', 'solid', 'rgba(209, 52, 56, 0.2)'),
-    backgroundColor: 'rgba(209, 52, 56, 0.05)',
-    color: '#d13438',
+    ...shorthands.border('1px', 'solid', 'rgba(244, 63, 94, 0.2)'),
+    backgroundColor: 'rgba(244, 63, 94, 0.05)',
+    color: '#f43f5e',
     fontSize: '14px',
     fontWeight: '500',
     cursor: 'pointer',
@@ -263,11 +265,11 @@ const useStyles = makeStyles({
     transitionProperty: 'all',
     fontFamily: 'inherit',
     ':hover': {
-      backgroundColor: 'rgba(209, 52, 56, 0.1)',
-      borderTopColor: 'rgba(209, 52, 56, 0.3)',
-      borderRightColor: 'rgba(209, 52, 56, 0.3)',
-      borderBottomColor: 'rgba(209, 52, 56, 0.3)',
-      borderLeftColor: 'rgba(209, 52, 56, 0.3)',
+      backgroundColor: 'rgba(244, 63, 94, 0.1)',
+      borderTopColor: 'rgba(244, 63, 94, 0.3)',
+      borderRightColor: 'rgba(244, 63, 94, 0.3)',
+      borderBottomColor: 'rgba(244, 63, 94, 0.3)',
+      borderLeftColor: 'rgba(244, 63, 94, 0.3)',
     },
   },
   editBtn: {
@@ -277,9 +279,9 @@ const useStyles = makeStyles({
     gap: '6px',
     ...shorthands.padding('10px', '20px'),
     ...shorthands.borderRadius('12px'),
-    ...shorthands.border('1px', 'solid', 'rgba(0, 120, 212, 0.2)'),
-    backgroundColor: 'rgba(0, 120, 212, 0.05)',
-    color: '#0078d4',
+    ...shorthands.border('1px', 'solid', 'rgba(99, 102, 241, 0.2)'),
+    backgroundColor: 'rgba(99, 102, 241, 0.05)',
+    color: '#6366f1',
     fontSize: '14px',
     fontWeight: '500',
     cursor: 'pointer',
@@ -287,11 +289,11 @@ const useStyles = makeStyles({
     transitionProperty: 'all',
     fontFamily: 'inherit',
     ':hover': {
-      backgroundColor: 'rgba(0, 120, 212, 0.1)',
-      borderTopColor: 'rgba(0, 120, 212, 0.3)',
-      borderRightColor: 'rgba(0, 120, 212, 0.3)',
-      borderBottomColor: 'rgba(0, 120, 212, 0.3)',
-      borderLeftColor: 'rgba(0, 120, 212, 0.3)',
+      backgroundColor: 'rgba(99, 102, 241, 0.1)',
+      borderTopColor: 'rgba(99, 102, 241, 0.3)',
+      borderRightColor: 'rgba(99, 102, 241, 0.3)',
+      borderBottomColor: 'rgba(99, 102, 241, 0.3)',
+      borderLeftColor: 'rgba(99, 102, 241, 0.3)',
     },
   },
   editOverlay: {
@@ -345,11 +347,11 @@ const useStyles = makeStyles({
     fontFamily: 'inherit',
     color: tokens.colorNeutralForeground1,
     ':focus': {
-      borderTopColor: '#0078d4',
-      borderRightColor: '#0078d4',
-      borderBottomColor: '#0078d4',
-      borderLeftColor: '#0078d4',
-      boxShadow: '0 0 0 3px rgba(0, 120, 212, 0.1)',
+      borderTopColor: '#6366f1',
+      borderRightColor: '#6366f1',
+      borderBottomColor: '#6366f1',
+      borderLeftColor: '#6366f1',
+      boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.1)',
     },
   },
   editTextarea: {
@@ -364,11 +366,11 @@ const useStyles = makeStyles({
     resize: 'vertical' as const,
     minHeight: '100px',
     ':focus': {
-      borderTopColor: '#0078d4',
-      borderRightColor: '#0078d4',
-      borderBottomColor: '#0078d4',
-      borderLeftColor: '#0078d4',
-      boxShadow: '0 0 0 3px rgba(0, 120, 212, 0.1)',
+      borderTopColor: '#6366f1',
+      borderRightColor: '#6366f1',
+      borderBottomColor: '#6366f1',
+      borderLeftColor: '#6366f1',
+      boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.1)',
     },
   },
   editActions: {
@@ -394,8 +396,8 @@ const useStyles = makeStyles({
   sectionCount: {
     ...shorthands.padding('2px', '10px'),
     ...shorthands.borderRadius('50px'),
-    backgroundColor: 'rgba(0, 120, 212, 0.08)',
-    color: '#0078d4',
+    backgroundColor: 'rgba(99, 102, 241, 0.08)',
+    color: '#6366f1',
     fontSize: '13px',
     fontWeight: '600',
   },
@@ -498,7 +500,7 @@ const useStyles = makeStyles({
     height: '8px',
     ...shorthands.borderRadius('4px'),
     ...shorthands.border('0'),
-    backgroundColor: '#0078d4',
+    backgroundColor: '#6366f1',
     cursor: 'pointer',
     transitionDuration: '0.3s',
     transitionProperty: 'all',
@@ -897,7 +899,7 @@ export default function DetailPage() {
                           objectFit: 'cover',
                           borderRadius: '8px',
                           cursor: 'pointer',
-                          border: index === carouselIndex ? '2px solid #0078d4' : '2px solid transparent',
+                          border: index === carouselIndex ? '2px solid #6366f1' : '2px solid transparent',
                           opacity: index === carouselIndex ? 1 : 0.6,
                           transition: 'all 0.2s',
                           flexShrink: 0,
@@ -936,7 +938,7 @@ export default function DetailPage() {
                       width: '36px',
                       height: '36px',
                       borderRadius: '10px',
-                      background: 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)',
+                      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -960,9 +962,9 @@ export default function DetailPage() {
                         gap: '6px',
                         padding: '8px 16px',
                         borderRadius: '10px',
-                        border: '1px solid rgba(0, 120, 212, 0.2)',
-                        backgroundColor: 'rgba(0, 120, 212, 0.05)',
-                        color: '#0078d4',
+                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                        backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                        color: '#6366f1',
                         fontSize: '13px',
                         fontWeight: 500,
                         cursor: 'pointer',
@@ -998,7 +1000,7 @@ export default function DetailPage() {
               width: '36px',
               height: '36px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #0078d4, #005a9e)',
+              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1085,7 +1087,7 @@ export default function DetailPage() {
                   width: '36px',
                   height: '36px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #50e6ff, #0078d4)',
+                  background: 'linear-gradient(135deg, #a78bfa, #6366f1)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1114,7 +1116,7 @@ export default function DetailPage() {
                           width: '100%',
                           padding: '8px 12px',
                           borderRadius: '10px',
-                          border: '1px solid rgba(0,120,212,0.3)',
+                          border: '1px solid rgba(99, 102, 241, 0.3)',
                           fontSize: '14px',
                           fontFamily: 'inherit',
                           resize: 'vertical',
@@ -1141,7 +1143,7 @@ export default function DetailPage() {
                     <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                       <button
                         onClick={() => { setEditingCommentId(c.id); setEditingCommentText(c.text); }}
-                        style={{ border: 'none', background: 'none', color: '#0078d4', fontSize: '12px', fontWeight: 500, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                        style={{ border: 'none', background: 'none', color: '#6366f1', fontSize: '12px', fontWeight: 500, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
                       >Modifier</button>
                       <button
                         onClick={async () => {
@@ -1151,7 +1153,7 @@ export default function DetailPage() {
                             setComments((prev) => prev.filter((x) => x.id !== c.id));
                           } catch (err) { setError(err); }
                         }}
-                        style={{ border: 'none', background: 'none', color: '#d13438', fontSize: '12px', fontWeight: 500, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                        style={{ border: 'none', background: 'none', color: '#f43f5e', fontSize: '12px', fontWeight: 500, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
                       >Supprimer</button>
                     </div>
                   )}
@@ -1179,8 +1181,8 @@ export default function DetailPage() {
                       style={{
                         padding: '3px 10px',
                         borderRadius: '50px',
-                        backgroundColor: SECTOR_TAGS.includes(tag) ? 'rgba(0,120,212,0.08)' : 'rgba(0,90,158,0.08)',
-                        color: SECTOR_TAGS.includes(tag) ? '#0078d4' : '#005a9e',
+                        backgroundColor: SECTOR_TAGS.includes(tag) ? 'rgba(99,102,241,0.08)' : 'rgba(139,92,246,0.08)',
+                        color: SECTOR_TAGS.includes(tag) ? '#6366f1' : '#8b5cf6',
                         fontSize: '11px',
                         fontWeight: 600,
                       }}
@@ -1283,7 +1285,7 @@ export default function DetailPage() {
               <div className={styles.statsRow}>
                 <div className={styles.statCard}>
                   <div className={`${styles.statIcon} ${styles.statIconViews}`}>
-                    <EyeRegular fontSize={16} />
+                    <DataTrendingRegular fontSize={16} />
                   </div>
                   <div className={styles.statInfo}>
                     <span className={styles.statValue}>{formatCount(component.view_count || 0)}</span>
@@ -1292,7 +1294,7 @@ export default function DetailPage() {
                 </div>
                 <div className={styles.statCard}>
                   <div className={`${styles.statIcon} ${styles.statIconDownloads}`}>
-                    <ArrowDownloadRegular fontSize={16} />
+                    <ArrowTrendingRegular fontSize={16} />
                   </div>
                   <div className={styles.statInfo}>
                     <span className={styles.statValue}>{formatCount(downloadCount)}</span>
@@ -1301,7 +1303,7 @@ export default function DetailPage() {
                 </div>
                 <div className={styles.statCard}>
                   <div className={`${styles.statIcon} ${styles.statIconRating}`}>
-                    <StarFilled fontSize={16} />
+                    <HeartRegular fontSize={16} />
                   </div>
                   <div className={styles.statInfo}>
                     <span className={styles.statValue}>{averageRating > 0 ? averageRating.toFixed(1) : '—'}</span>
@@ -1388,10 +1390,10 @@ export default function DetailPage() {
               {editFiles.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
                   {editFiles.map((f, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#0078d4' }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#6366f1' }}>
                       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
                       <button
-                        style={{ border: 'none', background: 'none', color: '#d13438', cursor: 'pointer', fontSize: '16px', padding: '2px' }}
+                        style={{ border: 'none', background: 'none', color: '#f43f5e', cursor: 'pointer', fontSize: '16px', padding: '2px' }}
                         onClick={() => setEditFiles((prev) => prev.filter((_, idx) => idx !== i))}
                         title="Retirer"
                       >
@@ -1415,9 +1417,9 @@ export default function DetailPage() {
                       style={{
                         padding: '4px 10px',
                         borderRadius: '50px',
-                        border: editTags.includes(tag) ? '1px solid #0078d4' : '1px solid rgba(0,0,0,0.08)',
-                        backgroundColor: editTags.includes(tag) ? 'rgba(0,120,212,0.1)' : 'transparent',
-                        color: editTags.includes(tag) ? '#0078d4' : '#555',
+                        border: editTags.includes(tag) ? '1px solid #6366f1' : '1px solid rgba(0,0,0,0.08)',
+                        backgroundColor: editTags.includes(tag) ? 'rgba(99,102,241,0.1)' : 'transparent',
+                        color: editTags.includes(tag) ? '#6366f1' : '#555',
                         fontSize: '12px',
                         fontWeight: 500,
                         cursor: 'pointer',
@@ -1438,9 +1440,9 @@ export default function DetailPage() {
                       style={{
                         padding: '4px 10px',
                         borderRadius: '50px',
-                        border: editTags.includes(tag) ? '1px solid #005a9e' : '1px solid rgba(0,0,0,0.08)',
-                        backgroundColor: editTags.includes(tag) ? 'rgba(0,90,158,0.1)' : 'transparent',
-                        color: editTags.includes(tag) ? '#005a9e' : '#555',
+                        border: editTags.includes(tag) ? '1px solid #8b5cf6' : '1px solid rgba(0,0,0,0.08)',
+                        backgroundColor: editTags.includes(tag) ? 'rgba(139,92,246,0.1)' : 'transparent',
+                        color: editTags.includes(tag) ? '#8b5cf6' : '#555',
                         fontSize: '12px',
                         fontWeight: 500,
                         cursor: 'pointer',

@@ -37,7 +37,7 @@ const useStyles = makeStyles({
     marginBottom: '14px',
   },
   heroGradient: {
-    background: 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)',
+    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',
@@ -70,11 +70,11 @@ const useStyles = makeStyles({
     fontFamily: 'inherit',
     color: tokens.colorNeutralForeground1,
     ':focus': {
-      borderTopColor: '#0078d4',
-      borderRightColor: '#0078d4',
-      borderBottomColor: '#0078d4',
-      borderLeftColor: '#0078d4',
-      boxShadow: '0 4px 20px rgba(0, 120, 212, 0.15)',
+      borderTopColor: '#6366f1',
+      borderRightColor: '#6366f1',
+      borderBottomColor: '#6366f1',
+      borderLeftColor: '#6366f1',
+      boxShadow: '0 4px 20px rgba(99, 102, 241, 0.15)',
     },
     '::placeholder': {
       color: tokens.colorNeutralForeground4,
@@ -129,10 +129,10 @@ const useStyles = makeStyles({
     fontFamily: 'inherit',
     ':hover': {
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderTopColor: 'rgba(0, 120, 212, 0.3)',
-      borderRightColor: 'rgba(0, 120, 212, 0.3)',
-      borderBottomColor: 'rgba(0, 120, 212, 0.3)',
-      borderLeftColor: 'rgba(0, 120, 212, 0.3)',
+      borderTopColor: 'rgba(99, 102, 241, 0.3)',
+      borderRightColor: 'rgba(99, 102, 241, 0.3)',
+      borderBottomColor: 'rgba(99, 102, 241, 0.3)',
+      borderLeftColor: 'rgba(99, 102, 241, 0.3)',
     },
   },
   sortBtnActive: {
@@ -141,9 +141,9 @@ const useStyles = makeStyles({
     gap: '5px',
     ...shorthands.padding('6px', '14px'),
     ...shorthands.borderRadius('10px'),
-    ...shorthands.border('1px', 'solid', 'rgba(0, 120, 212, 0.3)'),
-    backgroundColor: 'rgba(0, 120, 212, 0.08)',
-    color: '#0078d4',
+    ...shorthands.border('1px', 'solid', 'rgba(99, 102, 241, 0.3)'),
+    backgroundColor: 'rgba(99, 102, 241, 0.08)',
+    color: '#6366f1',
     fontSize: '13px',
     fontWeight: '600',
     cursor: 'pointer',
@@ -164,7 +164,7 @@ const useStyles = makeStyles({
     width: '80px',
     height: '80px',
     ...shorthands.borderRadius('50%'),
-    background: 'linear-gradient(135deg, rgba(0, 120, 212, 0.1), rgba(0, 90, 158, 0.1))',
+    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(79, 70, 229, 0.1))',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -214,10 +214,10 @@ const useStyles = makeStyles({
     fontFamily: 'inherit',
     ':hover': {
       backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      borderTopColor: 'rgba(0, 120, 212, 0.3)',
-      borderRightColor: 'rgba(0, 120, 212, 0.3)',
-      borderBottomColor: 'rgba(0, 120, 212, 0.3)',
-      borderLeftColor: 'rgba(0, 120, 212, 0.3)',
+      borderTopColor: 'rgba(99, 102, 241, 0.3)',
+      borderRightColor: 'rgba(99, 102, 241, 0.3)',
+      borderBottomColor: 'rgba(99, 102, 241, 0.3)',
+      borderLeftColor: 'rgba(99, 102, 241, 0.3)',
     },
   },
   pageBtnDisabled: {
@@ -313,9 +313,9 @@ export default function GalleryPage() {
               gap: '6px',
               padding: '6px 16px',
               borderRadius: '50px',
-              border: activeTags.length > 0 ? '1px solid #0078d4' : '1px solid rgba(0,0,0,0.08)',
-              backgroundColor: activeTags.length > 0 ? 'rgba(0,120,212,0.08)' : 'rgba(255,255,255,0.7)',
-              color: activeTags.length > 0 ? '#0078d4' : '#666',
+              border: activeTags.length > 0 ? '1px solid #6366f1' : '1px solid rgba(0,0,0,0.08)',
+              backgroundColor: activeTags.length > 0 ? 'rgba(99,102,241,0.08)' : 'rgba(255,255,255,0.7)',
+              color: activeTags.length > 0 ? '#6366f1' : '#666',
               fontSize: '13px',
               fontWeight: 600,
               cursor: 'pointer',
@@ -328,7 +328,7 @@ export default function GalleryPage() {
             Filtres
             {activeTags.length > 0 && (
               <span style={{
-                backgroundColor: '#0078d4',
+                backgroundColor: '#6366f1',
                 color: 'white',
                 borderRadius: '50%',
                 width: '18px',
@@ -352,8 +352,8 @@ export default function GalleryPage() {
                 gap: '4px',
                 padding: '4px 10px',
                 borderRadius: '50px',
-                backgroundColor: SECTOR_TAGS.includes(tag) ? 'rgba(0,120,212,0.1)' : 'rgba(0,90,158,0.1)',
-                color: SECTOR_TAGS.includes(tag) ? '#0078d4' : '#005a9e',
+                backgroundColor: SECTOR_TAGS.includes(tag) ? 'rgba(99,102,241,0.1)' : 'rgba(139,92,246,0.1)',
+                color: SECTOR_TAGS.includes(tag) ? '#6366f1' : '#8b5cf6',
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -364,7 +364,7 @@ export default function GalleryPage() {
           {activeTags.length > 1 && (
             <button
               onClick={() => { setActiveTags([]); setPage(1); }}
-              style={{ border: 'none', background: 'none', color: '#d13438', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', padding: '4px 8px' }}
+              style={{ border: 'none', background: 'none', color: '#f43f5e', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', padding: '4px 8px' }}
             >Tout effacer</button>
           )}
         </div>
@@ -392,9 +392,9 @@ export default function GalleryPage() {
                       style={{
                         padding: '4px 12px',
                         borderRadius: '50px',
-                        border: active ? '1px solid #0078d4' : '1px solid rgba(0,0,0,0.06)',
-                        backgroundColor: active ? 'rgba(0,120,212,0.1)' : 'transparent',
-                        color: active ? '#0078d4' : '#666',
+                        border: active ? '1px solid #6366f1' : '1px solid rgba(0,0,0,0.06)',
+                        backgroundColor: active ? 'rgba(99,102,241,0.1)' : 'transparent',
+                        color: active ? '#6366f1' : '#666',
                         fontSize: '12px',
                         fontWeight: active ? 600 : 500,
                         cursor: 'pointer',
@@ -418,9 +418,9 @@ export default function GalleryPage() {
                       style={{
                         padding: '4px 12px',
                         borderRadius: '50px',
-                        border: active ? '1px solid #005a9e' : '1px solid rgba(0,0,0,0.06)',
-                        backgroundColor: active ? 'rgba(0,90,158,0.1)' : 'transparent',
-                        color: active ? '#005a9e' : '#666',
+                        border: active ? '1px solid #8b5cf6' : '1px solid rgba(0,0,0,0.06)',
+                        backgroundColor: active ? 'rgba(139,92,246,0.1)' : 'transparent',
+                        color: active ? '#8b5cf6' : '#666',
                         fontSize: '12px',
                         fontWeight: active ? 600 : 500,
                         cursor: 'pointer',

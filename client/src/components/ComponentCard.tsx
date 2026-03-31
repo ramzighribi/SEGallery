@@ -7,10 +7,11 @@ import {
   shorthands,
 } from '@fluentui/react-components';
 import {
-  EyeRegular,
-  ArrowDownloadRegular,
+  DataTrendingRegular,
+  ArrowTrendingRegular,
   PersonRegular,
   CalendarRegular,
+  HeartRegular,
   StarFilled,
   OpenRegular,
 } from '@fluentui/react-icons';
@@ -35,11 +36,11 @@ const useStyles = makeStyles({
     position: 'relative' as const,
     ':hover': {
       transform: 'translateY(-6px) scale(1.01)',
-      boxShadow: '0 20px 60px rgba(0, 120, 212, 0.15), 0 8px 24px rgba(0, 0, 0, 0.06)',
-      borderTopColor: 'rgba(0, 120, 212, 0.35)',
-      borderRightColor: 'rgba(0, 120, 212, 0.35)',
-      borderBottomColor: 'rgba(0, 120, 212, 0.35)',
-      borderLeftColor: 'rgba(0, 120, 212, 0.35)',
+      boxShadow: '0 20px 60px rgba(99, 102, 241, 0.15), 0 8px 24px rgba(0, 0, 0, 0.06)',
+      borderTopColor: 'rgba(99, 102, 241, 0.35)',
+      borderRightColor: 'rgba(99, 102, 241, 0.35)',
+      borderBottomColor: 'rgba(99, 102, 241, 0.35)',
+      borderLeftColor: 'rgba(99, 102, 241, 0.35)',
     },
   },
   imageWrapper: {
@@ -189,14 +190,14 @@ const useStyles = makeStyles({
     width: '26px',
     height: '26px',
     ...shorthands.borderRadius('50%'),
-    background: 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)',
+    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: 'white',
     fontSize: '11px',
     fontWeight: '700',
-    boxShadow: '0 2px 6px rgba(0, 120, 212, 0.3)',
+    boxShadow: '0 2px 6px rgba(99, 102, 241, 0.3)',
   },
   date: {
     display: 'flex',
@@ -260,16 +261,16 @@ export default function ComponentCard({ component }: Props) {
         )}
         <div className={styles.statsOverlay}>
           <div className={styles.statPill}>
-            <EyeRegular fontSize={13} />
+            <DataTrendingRegular fontSize={13} />
             {formatCount(component.view_count || 0)}
           </div>
           <div className={styles.statPill}>
-            <ArrowDownloadRegular fontSize={13} />
+            <ArrowTrendingRegular fontSize={13} />
             {formatCount(component.download_count || 0)}
           </div>
           {(component.rating_count || 0) > 0 && (
             <div className={`${styles.statPill} ${styles.ratingPill}`}>
-              <StarFilled fontSize={13} />
+              <HeartRegular fontSize={13} />
               {(component.average_rating || 0).toFixed(1)}
             </div>
           )}
