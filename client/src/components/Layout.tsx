@@ -68,43 +68,49 @@ const useStyles = makeStyles({
   },
   nav: {
     display: 'flex',
-    gap: '4px',
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
-    ...shorthands.borderRadius('12px'),
-    ...shorthands.padding('4px'),
+    gap: '6px',
+    backgroundColor: 'rgba(99, 102, 241, 0.04)',
+    ...shorthands.borderRadius('16px'),
+    ...shorthands.padding('5px'),
+    ...shorthands.border('1px', 'solid', 'rgba(99, 102, 241, 0.08)'),
   },
   navItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
-    ...shorthands.padding('8px', '16px'),
-    ...shorthands.borderRadius('10px'),
-    fontSize: '14px',
+    gap: '8px',
+    ...shorthands.padding('10px', '22px'),
+    ...shorthands.borderRadius('12px'),
+    fontSize: '15px',
     fontWeight: '500',
     color: tokens.colorNeutralForeground3,
     cursor: 'pointer',
-    transitionDuration: '0.2s',
+    transitionDuration: '0.25s',
     transitionProperty: 'all',
     ...shorthands.border('0'),
     backgroundColor: 'transparent',
+    fontFamily: 'inherit',
+    letterSpacing: '-0.01em',
     ':hover': {
-      color: tokens.colorNeutralForeground1,
-      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+      color: '#6366f1',
+      backgroundColor: 'rgba(99, 102, 241, 0.08)',
+      transform: 'translateY(-1px)',
     },
   },
   navItemActive: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
-    ...shorthands.padding('8px', '16px'),
-    ...shorthands.borderRadius('10px'),
-    fontSize: '14px',
+    gap: '8px',
+    ...shorthands.padding('10px', '22px'),
+    ...shorthands.borderRadius('12px'),
+    fontSize: '15px',
     fontWeight: '600',
     color: 'white',
     cursor: 'pointer',
     ...shorthands.border('0'),
-    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-    boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
+    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35), 0 1px 3px rgba(99, 102, 241, 0.2)',
+    fontFamily: 'inherit',
+    letterSpacing: '-0.01em',
   },
   headerRight: {
     display: 'flex',
@@ -200,14 +206,14 @@ export default function Layout({ children }: { children: ReactNode }) {
             className={location.pathname === '/' ? styles.navItemActive : styles.navItem}
             onClick={() => navigate('/')}
           >
-            <GridRegular fontSize={16} />
+            <GridRegular fontSize={18} />
             Galerie
           </button>
           <button
             className={location.pathname === '/upload' ? styles.navItemActive : styles.navItem}
             onClick={() => navigate('/upload')}
           >
-            <ArrowUploadRegular fontSize={16} />
+            <ArrowUploadRegular fontSize={18} />
             Publier
           </button>
         </nav>
