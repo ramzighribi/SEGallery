@@ -1,5 +1,5 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { initDatabase, getComponentById, incrementComponentField } from '../database.js';
+import { initDatabase, getComponentById, getFileById, incrementComponentField } from '../database.js';
 import { downloadBlobBuffer } from '../storage.js';
 
 let dbInitialized = false;
@@ -41,13 +41,30 @@ app.http('downloadComponent', {
       // Increment download count
       await incrementComponentField(id!, 'download_count').catch(() => {});
 
-      const containerName = getContainerFromUrl(component.file_blob_url);
-      const blobName = getBlobNameFromUrl(component.file_blob_url);
+      // Check if a specific fileId is requested
+      const fileId = req.query.get('fileId');
+      let blobUrl: string;
+      let fileName: string;
+
+      if (fileId && fileId !== 'primary') {
+        const fileEntity = await getFileById(id!, fileId);
+        if (!fileEntity) {
+          return { status: 404, jsonBody: { error: 'File not found' } };
+        }
+        blobUrl = fileEntity.blob_url;
+        fileName = fileEntity.file_name;
+      } else {
+        blobUrl = component.file_blob_url;
+        fileName = component.file_name;
+      }
+
+      const containerName = getContainerFromUrl(blobUrl);
+      const blobName = getBlobNameFromUrl(blobUrl);
 
       const buffer = await downloadBlobBuffer(containerName, blobName);
 
       // Determine content type based on extension
-      const ext = component.file_name.split('.').pop()?.toLowerCase();
+      const ext = fileName.split('.').pop()?.toLowerCase();
       let contentType = 'application/octet-stream';
       if (ext === 'zip') contentType = 'application/zip';
       else if (ext === 'html' || ext === 'htm') contentType = 'application/octet-stream'; // Force download, not render
@@ -56,7 +73,7 @@ app.http('downloadComponent', {
         status: 200,
         headers: {
           'Content-Type': contentType,
-          'Content-Disposition': `attachment; filename="${encodeURIComponent(component.file_name)}"`,
+          'Content-Disposition': `attachment; filename="${encodeURIComponent(fileName)}"`,
           'Content-Length': String(buffer.length),
         },
         body: buffer,

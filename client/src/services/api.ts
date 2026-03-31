@@ -48,11 +48,19 @@ export interface ComponentSummary {
   rating_count: number;
 }
 
+export interface ComponentFile {
+  id: string;
+  fileName: string;
+  contentType: string;
+  fileSize: number;
+}
+
 export interface ComponentDetail extends ComponentSummary {
   file_name: string;
   author_id: string;
   fileUrl: string;
   screenshots: { id: string; fileName: string; url: string }[];
+  files: ComponentFile[];
 }
 
 export interface PaginatedResponse<T> {
@@ -129,8 +137,9 @@ export async function deleteComponent(id: string): Promise<void> {
   }
 }
 
-export function getDownloadUrl(id: string): string {
-  return `${API_BASE}/downloads/${encodeURIComponent(id)}/file`;
+export function getDownloadUrl(id: string, fileId?: string): string {
+  const base = `${API_BASE}/downloads/${encodeURIComponent(id)}/file`;
+  return fileId ? `${base}?fileId=${encodeURIComponent(fileId)}` : base;
 }
 
 export async function trackDownload(id: string): Promise<{ download_count: number }> {

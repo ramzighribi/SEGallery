@@ -30,7 +30,7 @@ import {
   StarFilled,
   EditRegular,
 } from '@fluentui/react-icons';
-import { fetchComponentById, deleteComponent, trackDownload, rateComponent, updateComponent, formatAuthorName, getDownloadUrl, ComponentDetail } from '../services/api';
+import { fetchComponentById, deleteComponent, trackDownload, rateComponent, updateComponent, formatAuthorName, getDownloadUrl, ComponentDetail, ComponentFile } from '../services/api';
 import { getAuthInfo, SwaUser } from '../services/auth';
 import ErrorBar from '../components/ErrorBar';
 import RichTextEditor from '../components/RichTextEditor';
@@ -634,7 +634,7 @@ export default function DetailPage() {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
-  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editFiles, setEditFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<SwaUser | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -662,14 +662,13 @@ export default function DetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleDownload = async () => {
+  const handleDownload = async (fileId?: string, fileName?: string) => {
     if (!id || !component) return;
     // Track download (best-effort), then navigate to server-side download endpoint
     trackDownload(id).then((r) => setDownloadCount(r.download_count)).catch(() => {});
-    // Use hidden link to trigger browser download via server endpoint with Content-Disposition: attachment
     const a = document.createElement('a');
-    a.href = getDownloadUrl(id);
-    a.download = component.file_name;
+    a.href = getDownloadUrl(id, fileId);
+    a.download = fileName || component.file_name;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -679,7 +678,7 @@ export default function DetailPage() {
     if (!component) return;
     setEditTitle(component.title);
     setEditDescription(component.description);
-    setEditFile(null);
+    setEditFiles([]);
     setEditing(true);
   };
 
@@ -695,8 +694,8 @@ export default function DetailPage() {
       const formData = new FormData();
       formData.append('title', editTitle.trim());
       formData.append('description', editDescription.trim());
-      if (editFile) {
-        formData.append('file', editFile);
+      if (editFiles.length > 0) {
+        editFiles.forEach((f) => formData.append('files', f));
       }
       await updateComponent(id, formData);
       // Reload component data
@@ -829,7 +828,7 @@ export default function DetailPage() {
             </div>
 
             <div className={styles.actions}>
-              <button className={styles.downloadBtn} onClick={handleDownload}>
+              <button className={styles.downloadBtn} onClick={() => handleDownload()}>
                 <ArrowDownloadRegular fontSize={18} />
                 Télécharger
               </button>
@@ -885,7 +884,9 @@ export default function DetailPage() {
               <div className={styles.metaIcon}>
                 <DocumentRegular fontSize={14} />
               </div>
-              {component.file_name}
+              {component.files && component.files.length > 1
+                ? `${component.files.length} fichiers`
+                : component.file_name}
             </div>
           </div>
 
@@ -917,6 +918,73 @@ export default function DetailPage() {
           )}
         </div>
       </div>
+
+      {component.files && component.files.length > 1 && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionTitle}>Fichiers</span>
+            <span className={styles.sectionCount}>{component.files.length}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {component.files.map((f: ComponentFile) => (
+              <div
+                key={f.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(0, 0, 0, 0.04)',
+                }}
+              >
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  flexShrink: 0,
+                }}>
+                  <DocumentRegular fontSize={16} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {f.fileName}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#888' }}>
+                    {(f.fileSize / 1024 / 1024).toFixed(1)} Mo
+                  </div>
+                </div>
+                <button
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(0, 120, 212, 0.2)',
+                    backgroundColor: 'rgba(0, 120, 212, 0.05)',
+                    color: '#0078d4',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                  onClick={() => handleDownload(f.id, f.fileName)}
+                >
+                  <ArrowDownloadRegular fontSize={14} />
+                  Télécharger
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {component.screenshots.length > 0 && (
         <div className={styles.section}>
@@ -1054,19 +1122,35 @@ export default function DetailPage() {
               />
             </div>
             <div className={styles.editField}>
-              <label className={styles.editLabel}>Remplacer le fichier (optionnel)</label>
+              <label className={styles.editLabel}>Remplacer les fichiers (optionnel)</label>
               <input
                 type="file"
                 accept=".zip,.html,.htm"
+                multiple
                 onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) setEditFile(f);
+                  const selected = Array.from(e.target.files || []);
+                  const valid = selected.filter((f) => {
+                    const ext = f.name.split('.').pop()?.toLowerCase();
+                    return ['zip', 'html', 'htm'].includes(ext || '');
+                  });
+                  if (valid.length > 0) setEditFiles((prev) => [...prev, ...valid]);
                 }}
                 style={{ fontSize: '14px' }}
               />
-              {editFile && (
-                <div style={{ fontSize: '13px', color: '#0078d4', marginTop: '4px' }}>
-                  Nouveau fichier : {editFile.name}
+              {editFiles.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                  {editFiles.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#0078d4' }}>
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                      <button
+                        style={{ border: 'none', background: 'none', color: '#d13438', cursor: 'pointer', fontSize: '16px', padding: '2px' }}
+                        onClick={() => setEditFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                        title="Retirer"
+                      >
+                        <DismissRegular fontSize={14} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

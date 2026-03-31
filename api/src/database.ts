@@ -5,6 +5,7 @@ import { credential } from './credential';
 const COMPONENTS_TABLE = 'Components';
 const SCREENSHOTS_TABLE = 'Screenshots';
 const RATINGS_TABLE = 'Ratings';
+const FILES_TABLE = 'Files';
 
 let tablesInitialized = false;
 
@@ -26,6 +27,10 @@ export function getRatingsTable(): TableClient {
   return new TableClient(getTableUrl(), RATINGS_TABLE, credential);
 }
 
+export function getFilesTable(): TableClient {
+  return new TableClient(getTableUrl(), FILES_TABLE, credential);
+}
+
 export async function initDatabase(): Promise<void> {
   if (tablesInitialized) return;
   const svc = new TableServiceClient(getTableUrl(), credential);
@@ -33,6 +38,7 @@ export async function initDatabase(): Promise<void> {
   await svc.createTable(COMPONENTS_TABLE).catch(() => {});
   await svc.createTable(SCREENSHOTS_TABLE).catch(() => {});
   await svc.createTable(RATINGS_TABLE).catch(() => {});
+  await svc.createTable(FILES_TABLE).catch(() => {});
   tablesInitialized = true;
 }
 
@@ -68,6 +74,17 @@ export interface ScreenshotEntity {
   rowKey: string;         // screenshot id
   file_name: string;
   blob_url: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface FileEntity {
+  partitionKey: string;   // component id
+  rowKey: string;         // file id
+  file_name: string;
+  blob_url: string;
+  content_type: string;
+  file_size: number;
   sort_order: number;
   created_at: string;
 }
@@ -233,4 +250,53 @@ export async function getUserRating(componentId: string, userId: string): Promis
     if (e.statusCode === 404) return null;
     throw e;
   }
+}
+
+// --- File helpers ---
+
+export async function insertFile(file: Omit<FileEntity, 'partitionKey'> & { component_id: string }): Promise<void> {
+  const table = getFilesTable();
+  await table.createEntity({
+    partitionKey: file.component_id,
+    rowKey: file.rowKey,
+    file_name: file.file_name,
+    blob_url: file.blob_url,
+    content_type: file.content_type,
+    file_size: file.file_size,
+    sort_order: file.sort_order,
+    created_at: file.created_at,
+  });
+}
+
+export async function getFilesByComponentId(componentId: string): Promise<FileEntity[]> {
+  const table = getFilesTable();
+  const results: FileEntity[] = [];
+  const iter = table.listEntities<FileEntity>({
+    queryOptions: { filter: odata`PartitionKey eq ${componentId}` },
+  });
+  for await (const entity of iter) {
+    results.push(entity as unknown as FileEntity);
+  }
+  results.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  return results;
+}
+
+export async function getFileById(componentId: string, fileId: string): Promise<FileEntity | null> {
+  const table = getFilesTable();
+  try {
+    const entity = await table.getEntity(componentId, fileId);
+    return entity as unknown as FileEntity;
+  } catch (e: any) {
+    if (e.statusCode === 404) return null;
+    throw e;
+  }
+}
+
+export async function deleteFilesByComponentId(componentId: string): Promise<FileEntity[]> {
+  const table = getFilesTable();
+  const files = await getFilesByComponentId(componentId);
+  for (const f of files) {
+    await table.deleteEntity(componentId, f.rowKey);
+  }
+  return files;
 }

@@ -1,5 +1,5 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { initDatabase, getComponentById, getScreenshotsByComponentId, deleteScreenshotsByComponentId, deleteComponentById } from '../database.js';
+import { initDatabase, getComponentById, getScreenshotsByComponentId, deleteScreenshotsByComponentId, getFilesByComponentId, deleteFilesByComponentId, deleteComponentById } from '../database.js';
 import { deleteBlob } from '../storage.js';
 import { getUser } from '../auth.js';
 
@@ -45,11 +45,20 @@ app.http('deleteComponent', {
         if (blobName) await deleteBlob('screenshots', blobName);
       }
 
-      // Delete component file blob
+      // Delete component file blob(s)
+      const componentFiles = await getFilesByComponentId(id!);
+      for (const f of componentFiles) {
+        const bn = getBlobNameFromUrl(f.blob_url);
+        if (bn) await deleteBlob('files', bn);
+      }
+      // Also delete primary file blob if not already covered
       const fileBlobName = getBlobNameFromUrl(component.file_blob_url);
-      if (fileBlobName) await deleteBlob('files', fileBlobName);
+      if (fileBlobName && !componentFiles.some(f => f.blob_url === component.file_blob_url)) {
+        await deleteBlob('files', fileBlobName);
+      }
 
       // Delete from Table Storage
+      await deleteFilesByComponentId(id!);
       await deleteScreenshotsByComponentId(id!);
       await deleteComponentById(id!);
 

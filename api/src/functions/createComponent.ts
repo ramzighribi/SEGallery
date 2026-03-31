@@ -1,6 +1,6 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { v4 as uuidv4 } from 'uuid';
-import { initDatabase, insertComponent, insertScreenshot } from '../database.js';
+import { initDatabase, insertComponent, insertScreenshot, insertFile } from '../database.js';
 import { uploadBlob } from '../storage.js';
 import { getUser, getUserName, getUserEmail } from '../auth.js';
 
@@ -56,16 +56,22 @@ app.http('createComponent', {
       }
 
       const componentFile = files.find((f) => f.fieldName === 'file');
-      if (!componentFile) {
-        return { status: 400, jsonBody: { error: 'A component file (zip or html) is required' } };
+      const componentFiles = files.filter((f) => f.fieldName === 'file' || f.fieldName === 'files');
+      if (componentFiles.length === 0) {
+        return { status: 400, jsonBody: { error: 'At least one component file (zip or html) is required' } };
+      }
+      if (componentFiles.length > 20) {
+        return { status: 400, jsonBody: { error: 'Maximum 20 files allowed' } };
       }
 
-      const fileExt = getExtension(componentFile.fileName);
-      if (!ALLOWED_FILE_EXT.includes(fileExt)) {
-        return { status: 400, jsonBody: { error: 'Only .zip, .html, .htm files are allowed' } };
-      }
-      if (componentFile.data.length > 50 * 1024 * 1024) {
-        return { status: 400, jsonBody: { error: 'File must not exceed 50MB' } };
+      for (const cf of componentFiles) {
+        const fileExt = getExtension(cf.fileName);
+        if (!ALLOWED_FILE_EXT.includes(fileExt)) {
+          return { status: 400, jsonBody: { error: `Only .zip, .html, .htm files are allowed: ${cf.fileName}` } };
+        }
+        if (cf.data.length > 50 * 1024 * 1024) {
+          return { status: 400, jsonBody: { error: `File must not exceed 50MB: ${cf.fileName}` } };
+        }
       }
 
       const screenshotFiles = files.filter((f) => f.fieldName === 'screenshots');
@@ -81,17 +87,19 @@ app.http('createComponent', {
       const componentId = uuidv4();
       const now = new Date().toISOString();
 
-      // Upload component file
-      const fileBlobName = `${componentId}/${uuidv4()}${fileExt}`;
-      const fileBlobUrl = await uploadBlob('files', fileBlobName, componentFile.data, componentFile.contentType);
+      // Upload component files (first file is the "primary" for backward compat)
+      const primaryFile = componentFiles[0];
+      const primaryFileExt = getExtension(primaryFile.fileName);
+      const primaryBlobName = `${componentId}/${uuidv4()}${primaryFileExt}`;
+      const primaryBlobUrl = await uploadBlob('files', primaryBlobName, primaryFile.data, primaryFile.contentType);
 
-      // Insert component in Table Storage
+      // Insert component in Table Storage (primary file info for backward compat)
       await insertComponent({
         rowKey: componentId,
         title,
         description,
-        file_name: componentFile.fileName,
-        file_blob_url: fileBlobUrl,
+        file_name: primaryFile.fileName,
+        file_blob_url: primaryBlobUrl,
         author_name: getUserName(user),
         author_email: getUserEmail(user),
         author_id: user.userId,
@@ -102,6 +110,29 @@ app.http('createComponent', {
         rating_sum: 0,
         rating_count: 0,
       });
+
+      // Insert all files into Files table
+      for (let i = 0; i < componentFiles.length; i++) {
+        const cf = componentFiles[i];
+        const ext = getExtension(cf.fileName);
+        let blobUrl: string;
+        if (i === 0) {
+          blobUrl = primaryBlobUrl;
+        } else {
+          const blobName = `${componentId}/${uuidv4()}${ext}`;
+          blobUrl = await uploadBlob('files', blobName, cf.data, cf.contentType);
+        }
+        await insertFile({
+          component_id: componentId,
+          rowKey: uuidv4(),
+          file_name: cf.fileName,
+          blob_url: blobUrl,
+          content_type: cf.contentType,
+          file_size: cf.data.length,
+          sort_order: i,
+          created_at: now,
+        });
+      }
 
       // Upload and insert screenshots
       for (let i = 0; i < screenshotFiles.length; i++) {

@@ -1,5 +1,5 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { initDatabase, getComponentById, getScreenshotsByComponentId, incrementComponentField } from '../database.js';
+import { initDatabase, getComponentById, getScreenshotsByComponentId, getFilesByComponentId, incrementComponentField } from '../database.js';
 import { generateReadSasUrl } from '../storage.js';
 
 let dbInitialized = false;
@@ -32,6 +32,28 @@ app.http('getComponentById', {
         });
       }
 
+      // Get files list (may be empty for old components)
+      const componentFiles = await getFilesByComponentId(id!);
+      const fileResults = [];
+      if (componentFiles.length > 0) {
+        for (const f of componentFiles) {
+          fileResults.push({
+            id: f.rowKey,
+            fileName: f.file_name,
+            contentType: f.content_type,
+            fileSize: f.file_size,
+          });
+        }
+      } else {
+        // Backward compat: present single file as files array
+        fileResults.push({
+          id: 'primary',
+          fileName: component.file_name,
+          contentType: '',
+          fileSize: 0,
+        });
+      }
+
       return {
         jsonBody: {
           id: component.rowKey,
@@ -49,6 +71,7 @@ app.http('getComponentById', {
           rating_count: component.rating_count || 0,
           fileUrl: await generateReadSasUrl(component.file_blob_url),
           screenshots: screenshotResults,
+          files: fileResults,
         },
       };
     } catch (err: any) {

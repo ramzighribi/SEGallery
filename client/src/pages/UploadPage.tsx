@@ -391,7 +391,7 @@ export default function UploadPage() {
   const [user, setUser] = useState<SwaUser | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [screenshots, setScreenshots] = useState<File[]>([]);
   const [screenshotPreviews, setScreenshotPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -407,16 +407,26 @@ export default function UploadPage() {
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) {
-      const ext = selected.name.split('.').pop()?.toLowerCase();
-      if (!['zip', 'html', 'htm'].includes(ext || '')) {
-        setError(new Error('Seuls les fichiers .zip, .html ou .htm sont acceptés'));
-        return;
-      }
-      setFile(selected);
+    const selected = Array.from(e.target.files || []);
+    const valid = selected.filter((f) => {
+      const ext = f.name.split('.').pop()?.toLowerCase();
+      return ['zip', 'html', 'htm'].includes(ext || '');
+    });
+    if (valid.length !== selected.length) {
+      setError(new Error('Seuls les fichiers .zip, .html ou .htm sont acceptés'));
+    }
+    if (files.length + valid.length > 20) {
+      setError(new Error('Maximum 20 fichiers autorisés'));
+      return;
+    }
+    if (valid.length > 0) {
+      setFiles((prev) => [...prev, ...valid]);
       setError(null);
     }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleScreenshotsSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -460,20 +470,26 @@ export default function UploadPage() {
     const droppedFiles = Array.from(e.dataTransfer.files);
     if (droppedFiles.length === 0) return;
 
-    const dropped = droppedFiles[0];
-    const ext = dropped.name.split('.').pop()?.toLowerCase();
-    if (!['zip', 'html', 'htm'].includes(ext || '')) {
+    const valid = droppedFiles.filter((f) => {
+      const ext = f.name.split('.').pop()?.toLowerCase();
+      return ['zip', 'html', 'htm'].includes(ext || '');
+    });
+    if (valid.length === 0) {
       setError(new Error('Seuls les fichiers .zip, .html ou .htm sont acceptés'));
       return;
     }
-    setFile(dropped);
+    if (files.length + valid.length > 20) {
+      setError(new Error('Maximum 20 fichiers autorisés'));
+      return;
+    }
+    setFiles((prev) => [...prev, ...valid]);
     setError(null);
   };
 
   const handleSubmit = async () => {
     if (!title.trim()) { setError(new Error('Le titre est requis')); return; }
     if (!description.trim()) { setError(new Error('La description est requise')); return; }
-    if (!file) { setError(new Error('Le fichier du composant est requis')); return; }
+    if (files.length === 0) { setError(new Error('Au moins un fichier source est requis')); return; }
 
     setSubmitting(true);
     setError(null);
@@ -482,7 +498,7 @@ export default function UploadPage() {
       const formData = new FormData();
       formData.append('title', title.trim());
       formData.append('description', description.trim());
-      formData.append('file', file);
+      files.forEach((f) => formData.append('files', f));
       screenshots.forEach((s) => formData.append('screenshots', s));
 
       const result = await createComponent(formData);
@@ -567,34 +583,37 @@ export default function UploadPage() {
 
           <div className={styles.field}>
             <label className={styles.label}>
-              Fichier source <span className={styles.required}>*</span>
+              Fichiers source <span className={styles.required}>*</span>
             </label>
             <span className={styles.hint}>
-              Formats acceptés : .zip, .html, .htm (max 50 Mo)
+              Formats acceptés : .zip, .html, .htm (max 50 Mo chacun, jusqu'à 20 fichiers)
             </span>
 
-            {file ? (
-              <div className={styles.fileInfo}>
-                <div className={styles.fileIcon}>
-                  <DocumentRegular fontSize={16} />
-                </div>
-                <div className={styles.fileDetails}>
-                  <div className={styles.fileName}>{file.name}</div>
-                  <div className={styles.fileSize}>
-                    {(file.size / 1024 / 1024).toFixed(1)} Mo
+            {files.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {files.map((f, index) => (
+                  <div key={index} className={styles.fileInfo}>
+                    <div className={styles.fileIcon}>
+                      <DocumentRegular fontSize={16} />
+                    </div>
+                    <div className={styles.fileDetails}>
+                      <div className={styles.fileName}>{f.name}</div>
+                      <div className={styles.fileSize}>
+                        {(f.size / 1024 / 1024).toFixed(1)} Mo
+                      </div>
+                    </div>
+                    <button
+                      className={styles.removeBtn}
+                      onClick={() => removeFile(index)}
+                    >
+                      <DismissRegular fontSize={14} />
+                    </button>
                   </div>
-                </div>
-                <button
-                  className={styles.removeBtn}
-                  onClick={() => {
-                    setFile(null);
-                    if (fileInputRef.current) fileInputRef.current.value = '';
-                  }}
-                >
-                  <DismissRegular fontSize={14} />
-                </button>
+                ))}
               </div>
-            ) : (
+            )}
+
+            {files.length < 20 && (
               <div
                 className={styles.dropZone}
                 onClick={() => fileInputRef.current?.click()}
@@ -611,7 +630,7 @@ export default function UploadPage() {
                   <ArrowUploadRegular fontSize={22} />
                 </div>
                 <div className={styles.dropZoneText}>
-                  {dragOver ? 'Déposez le fichier ici' : 'Cliquez pour sélectionner un fichier'}
+                  {dragOver ? 'Déposez les fichiers ici' : 'Cliquez pour sélectionner des fichiers'}
                 </div>
                 <div className={styles.dropZoneHint}>ou glissez-déposez ici</div>
               </div>
@@ -621,6 +640,7 @@ export default function UploadPage() {
               ref={fileInputRef}
               type="file"
               accept=".zip,.html,.htm"
+              multiple
               onChange={handleFileSelect}
               style={{ display: 'none' }}
             />

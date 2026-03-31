@@ -1,6 +1,6 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { v4 as uuidv4 } from 'uuid';
-import { initDatabase, getComponentById, updateComponent, insertScreenshot, getScreenshotsByComponentId, deleteScreenshotsByComponentId } from '../database.js';
+import { initDatabase, getComponentById, updateComponent, insertScreenshot, insertFile, getScreenshotsByComponentId, deleteScreenshotsByComponentId, getFilesByComponentId, deleteFilesByComponentId } from '../database.js';
 import { uploadBlob, deleteBlob } from '../storage.js';
 import { getUser } from '../auth.js';
 
@@ -74,26 +74,63 @@ app.http('updateComponent', {
       const now = new Date().toISOString();
       const updates: Record<string, string> = { title, description, updated_at: now };
 
-      // Handle optional new file
-      const componentFile = files.find((f) => f.fieldName === 'file');
-      if (componentFile) {
-        const fileExt = getExtension(componentFile.fileName);
-        if (!ALLOWED_FILE_EXT.includes(fileExt)) {
-          return { status: 400, jsonBody: { error: 'Only .zip, .html, .htm files are allowed' } };
-        }
-        if (componentFile.data.length > 50 * 1024 * 1024) {
-          return { status: 400, jsonBody: { error: 'File must not exceed 50MB' } };
+      // Handle optional new file(s)
+      const componentFiles = files.filter((f) => f.fieldName === 'file' || f.fieldName === 'files');
+      if (componentFiles.length > 0) {
+        // Validate all files
+        for (const cf of componentFiles) {
+          const fileExt = getExtension(cf.fileName);
+          if (!ALLOWED_FILE_EXT.includes(fileExt)) {
+            return { status: 400, jsonBody: { error: `Only .zip, .html, .htm files are allowed: ${cf.fileName}` } };
+          }
+          if (cf.data.length > 50 * 1024 * 1024) {
+            return { status: 400, jsonBody: { error: `File must not exceed 50MB: ${cf.fileName}` } };
+          }
         }
 
-        // Delete old file blob
+        // Delete old file blobs
+        const oldFiles = await getFilesByComponentId(id!);
+        for (const of_ of oldFiles) {
+          const bn = getBlobNameFromUrl(of_.blob_url);
+          if (bn) await deleteBlob('files', bn);
+        }
+        await deleteFilesByComponentId(id!);
+
+        // Also delete old primary file blob
         const oldBlobName = getBlobNameFromUrl(component.file_blob_url);
-        if (oldBlobName) await deleteBlob('files', oldBlobName);
+        if (oldBlobName && !oldFiles.some(f => f.blob_url === component.file_blob_url)) {
+          await deleteBlob('files', oldBlobName);
+        }
 
-        // Upload new file
-        const fileBlobName = `${id}/${uuidv4()}${fileExt}`;
-        const fileBlobUrl = await uploadBlob('files', fileBlobName, componentFile.data, componentFile.contentType);
-        updates.file_name = componentFile.fileName;
-        updates.file_blob_url = fileBlobUrl;
+        // Upload new files
+        const primaryFile = componentFiles[0];
+        const primaryExt = getExtension(primaryFile.fileName);
+        const primaryBlobName = `${id}/${uuidv4()}${primaryExt}`;
+        const primaryBlobUrl = await uploadBlob('files', primaryBlobName, primaryFile.data, primaryFile.contentType);
+        updates.file_name = primaryFile.fileName;
+        updates.file_blob_url = primaryBlobUrl;
+
+        for (let i = 0; i < componentFiles.length; i++) {
+          const cf = componentFiles[i];
+          const ext = getExtension(cf.fileName);
+          let blobUrl: string;
+          if (i === 0) {
+            blobUrl = primaryBlobUrl;
+          } else {
+            const blobName = `${id}/${uuidv4()}${ext}`;
+            blobUrl = await uploadBlob('files', blobName, cf.data, cf.contentType);
+          }
+          await insertFile({
+            component_id: id!,
+            rowKey: uuidv4(),
+            file_name: cf.fileName,
+            blob_url: blobUrl,
+            content_type: cf.contentType,
+            file_size: cf.data.length,
+            sort_order: i,
+            created_at: now,
+          });
+        }
       }
 
       await updateComponent(id!, updates);
