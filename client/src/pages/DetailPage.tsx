@@ -37,7 +37,7 @@ import RichTextEditor from '../components/RichTextEditor';
 
 const useStyles = makeStyles({
   container: {
-    maxWidth: '960px',
+    maxWidth: '1200px',
     ...shorthands.margin('0', 'auto'),
   },
   backBtn: {
@@ -61,6 +61,25 @@ const useStyles = makeStyles({
       color: tokens.colorNeutralForeground1,
     },
   },
+  twoCol: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 380px',
+    gap: '28px',
+    alignItems: 'start',
+    '@media (max-width: 900px)': {
+      gridTemplateColumns: '1fr',
+    },
+  },
+  leftCol: {
+    minWidth: 0,
+  },
+  rightCol: {
+    position: 'sticky' as const,
+    top: '24px',
+    '@media (max-width: 900px)': {
+      position: 'static' as const,
+    },
+  },
   mainCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.72)',
     backdropFilter: 'blur(20px)',
@@ -71,7 +90,7 @@ const useStyles = makeStyles({
     ...shorthands.overflow('hidden'),
   },
   cardInner: {
-    ...shorthands.padding('32px'),
+    ...shorthands.padding('24px'),
   },
   titleRow: {
     display: 'flex',
@@ -85,30 +104,33 @@ const useStyles = makeStyles({
     minWidth: '250px',
   },
   title: {
-    fontSize: '28px',
+    fontSize: '22px',
     fontWeight: '700',
     letterSpacing: '-0.02em',
-    lineHeight: '1.2',
+    lineHeight: '1.3',
     color: tokens.colorNeutralForeground1,
   },
   description: {
     marginTop: '12px',
-    fontSize: '15px',
+    fontSize: '14px',
     lineHeight: '1.7',
     color: tokens.colorNeutralForeground2,
+    maxHeight: '200px',
+    overflowY: 'auto' as const,
     '& p': { margin: '0 0 8px' },
   },
   statsRow: {
-    display: 'flex',
-    gap: '12px',
-    marginTop: '24px',
-    flexWrap: 'wrap',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '10px',
+    marginTop: '16px',
   },
   statCard: {
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: '10px',
-    ...shorthands.padding('12px', '20px'),
+    gap: '6px',
+    ...shorthands.padding('12px', '8px'),
     ...shorthands.borderRadius('14px'),
     backgroundColor: 'rgba(0, 0, 0, 0.02)',
     ...shorthands.border('1px', 'solid', 'rgba(0, 0, 0, 0.04)'),
@@ -136,24 +158,25 @@ const useStyles = makeStyles({
   statInfo: {
     display: 'flex',
     flexDirection: 'column',
+    alignItems: 'center',
   },
   statValue: {
-    fontSize: '20px',
+    fontSize: '18px',
     fontWeight: '700',
     lineHeight: '1.2',
     color: tokens.colorNeutralForeground1,
   },
   statLabel: {
-    fontSize: '12px',
+    fontSize: '11px',
     color: tokens.colorNeutralForeground3,
     fontWeight: '500',
   },
   metaRow: {
     display: 'flex',
-    flexWrap: 'wrap',
-    gap: '20px',
-    marginTop: '24px',
-    ...shorthands.padding('20px', '0', '0'),
+    flexDirection: 'column',
+    gap: '10px',
+    marginTop: '16px',
+    ...shorthands.padding('16px', '0', '0'),
     borderTop: '1px solid rgba(0, 0, 0, 0.06)',
   },
   metaItem: {
@@ -194,7 +217,9 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
-    flexShrink: 0,
+    marginTop: '16px',
+    ...shorthands.padding('16px', '0', '0'),
+    borderTop: '1px solid rgba(0, 0, 0, 0.06)',
   },
   downloadBtn: {
     display: 'flex',
@@ -554,8 +579,8 @@ const useStyles = makeStyles({
     },
   },
   ratingSection: {
-    marginTop: '24px',
-    ...shorthands.padding('20px', '0', '0'),
+    marginTop: '16px',
+    ...shorthands.padding('16px', '0', '0'),
     borderTop: '1px solid rgba(0, 0, 0, 0.06)',
   },
   ratingLabel: {
@@ -794,345 +819,172 @@ export default function DetailPage() {
         Retour à la galerie
       </button>
 
-      <div className={`${styles.mainCard} fade-in-up`}>
-        {error ? (
-          <div style={{ padding: '20px 32px 0' }}>
-            <ErrorBar error={error} fallbackMessage="Une erreur est survenue" />
-          </div>
-        ) : null}
-        <div className={styles.cardInner}>
-          <div className={styles.titleRow}>
-            <div className={styles.titleLeft}>
-              <h1 className={styles.title}>{component.title}</h1>
-              {component.tags && component.tags.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
-                  {component.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: '50px',
-                        backgroundColor: SECTOR_TAGS.includes(tag) ? 'rgba(0,120,212,0.08)' : 'rgba(0,90,158,0.08)',
-                        color: SECTOR_TAGS.includes(tag) ? '#0078d4' : '#005a9e',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                      }}
-                    >{tag}</span>
+      {error ? (
+        <div style={{ marginBottom: '16px' }}>
+          <ErrorBar error={error} fallbackMessage="Une erreur est survenue" />
+        </div>
+      ) : null}
+
+      <div className={styles.twoCol}>
+        {/* ── LEFT COLUMN: visuals, files, comments ── */}
+        <div className={styles.leftCol}>
+          {component.screenshots.length > 0 && (
+            <div className={`${styles.mainCard} fade-in-up`}>
+              {/* Carousel */}
+              <div className={styles.carousel}>
+                <div className={styles.carouselCounter}>
+                  {carouselIndex + 1} / {component.screenshots.length}
+                </div>
+                <div
+                  className={styles.carouselTrack}
+                  style={{ transform: `translateX(-${carouselIndex * 100}%)` }}
+                >
+                  {component.screenshots.map((screenshot) => (
+                    <div key={screenshot.id} className={styles.carouselSlide} onClick={() => setLightboxIndex(carouselIndex)}>
+                      <img
+                        src={screenshot.url}
+                        alt={screenshot.fileName}
+                        className={styles.carouselImg}
+                      />
+                    </div>
                   ))}
                 </div>
-              )}
-              <div className={styles.description} dangerouslySetInnerHTML={{ __html: component.description }} />
-
-              <div className={styles.statsRow}>
-                <div className={styles.statCard}>
-                  <div className={`${styles.statIcon} ${styles.statIconViews}`}>
-                    <EyeRegular fontSize={18} />
-                  </div>
-                  <div className={styles.statInfo}>
-                    <span className={styles.statValue}>{formatCount(component.view_count || 0)}</span>
-                    <span className={styles.statLabel}>Vues</span>
-                  </div>
-                </div>
-                <div className={styles.statCard}>
-                  <div className={`${styles.statIcon} ${styles.statIconDownloads}`}>
-                    <ArrowDownloadRegular fontSize={18} />
-                  </div>
-                  <div className={styles.statInfo}>
-                    <span className={styles.statValue}>{formatCount(downloadCount)}</span>
-                    <span className={styles.statLabel}>Téléchargements</span>
-                  </div>
-                </div>
-                <div className={styles.statCard}>
-                  <div className={`${styles.statIcon} ${styles.statIconRating}`}>
-                    <StarFilled fontSize={18} />
-                  </div>
-                  <div className={styles.statInfo}>
-                    <span className={styles.statValue}>{averageRating > 0 ? averageRating.toFixed(1) : '—'}</span>
-                    <span className={styles.statLabel}>{ratingCount} avis</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.actions}>
-              <button className={styles.downloadBtn} onClick={() => handleDownload()}>
-                <ArrowDownloadRegular fontSize={18} />
-                Télécharger
-              </button>
-              {isOwner && (
-                <button className={styles.editBtn} onClick={openEditDialog}>
-                  <EditRegular fontSize={16} />
-                  Modifier
-                </button>
-              )}
-              {isOwner && (
-                <Dialog>
-                  <DialogTrigger disableButtonEnhancement>
-                    <button className={styles.deleteBtn}>
-                      <DeleteRegular fontSize={16} />
-                      Supprimer
-                    </button>
-                  </DialogTrigger>
-                  <DialogSurface>
-                    <DialogBody>
-                      <DialogTitle>Supprimer ce composant ?</DialogTitle>
-                      <DialogContent>
-                        Cette action est irréversible. Le composant et tous ses fichiers seront supprimés.
-                      </DialogContent>
-                      <DialogActions>
-                        <DialogTrigger disableButtonEnhancement>
-                          <Button appearance="secondary">Annuler</Button>
-                        </DialogTrigger>
-                        <Button appearance="primary" onClick={handleDelete} disabled={deleting}>
-                          {deleting ? 'Suppression...' : 'Supprimer'}
-                        </Button>
-                      </DialogActions>
-                    </DialogBody>
-                  </DialogSurface>
-                </Dialog>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.metaRow}>
-            <div className={styles.metaItem}>
-              <div className={styles.metaIcon}>
-                <PersonRegular fontSize={14} />
-              </div>
-              <Text weight="semibold">{formatAuthorName(component.author_name)}</Text>
-            </div>
-            <div className={styles.metaItem}>
-              <div className={styles.metaIcon}>
-                <CalendarRegular fontSize={14} />
-              </div>
-              {formattedDate}
-            </div>
-            <div className={styles.metaItem}>
-              <div className={styles.metaIcon}>
-                <DocumentRegular fontSize={14} />
-              </div>
-              {component.files && component.files.length > 1
-                ? `${component.files.length} fichiers`
-                : component.file_name}
-            </div>
-          </div>
-
-          {user && (
-            <div className={styles.ratingSection}>
-              <span className={styles.ratingLabel}>Votre note</span>
-              <div className={styles.starsRow}>
-                {[1, 2, 3, 4, 5].map((star) => (
+                {carouselIndex > 0 && (
                   <button
-                    key={star}
-                    className={styles.starBtn}
-                    onMouseEnter={() => setHoverStar(star)}
-                    onMouseLeave={() => setHoverStar(0)}
-                    onClick={() => handleRate(star)}
-                    title={`${star}/5`}
+                    className={styles.carouselNav}
+                    style={{ left: '12px' }}
+                    onClick={() => setCarouselIndex(carouselIndex - 1)}
                   >
-                    {star <= (hoverStar || userRating) ? (
-                      <StarFilled fontSize={28} style={{ color: '#ffb900' }} />
-                    ) : (
-                      <StarRegular fontSize={28} style={{ color: '#c8c6c4' }} />
-                    )}
+                    <ChevronLeftRegular fontSize={18} />
                   </button>
-                ))}
-                <span className={styles.ratingInfo}>
-                  {userRating > 0 ? `Vous avez noté ${userRating}/5` : 'Cliquez pour noter'}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {component.files && component.files.length > 1 && (
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionTitle}>Fichiers</span>
-            <span className={styles.sectionCount}>{component.files.length}</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {component.files.map((f: ComponentFile) => (
-              <div
-                key={f.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px 16px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(0, 0, 0, 0.04)',
-                }}
-              >
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  flexShrink: 0,
-                }}>
-                  <DocumentRegular fontSize={16} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {f.fileName}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>
-                    {(f.fileSize / 1024 / 1024).toFixed(1)} Mo
-                  </div>
-                </div>
-                <button
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 16px',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(0, 120, 212, 0.2)',
-                    backgroundColor: 'rgba(0, 120, 212, 0.05)',
-                    color: '#0078d4',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                  onClick={() => handleDownload(f.id, f.fileName)}
-                >
-                  <ArrowDownloadRegular fontSize={14} />
-                  Télécharger
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {component.screenshots.length > 0 && (
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionTitle}>Screenshots</span>
-            <span className={styles.sectionCount}>{component.screenshots.length}</span>
-          </div>
-
-          {/* Carousel */}
-          <div className={styles.carousel}>
-            <div className={styles.carouselCounter}>
-              {carouselIndex + 1} / {component.screenshots.length}
-            </div>
-            <div
-              className={styles.carouselTrack}
-              style={{ transform: `translateX(-${carouselIndex * 100}%)` }}
-            >
-              {component.screenshots.map((screenshot) => (
-                <div key={screenshot.id} className={styles.carouselSlide} onClick={() => setLightboxIndex(carouselIndex)}>
-                  <img
-                    src={screenshot.url}
-                    alt={screenshot.fileName}
-                    className={styles.carouselImg}
-                  />
-                </div>
-              ))}
-            </div>
-            {carouselIndex > 0 && (
-              <button
-                className={styles.carouselNav}
-                style={{ left: '12px' }}
-                onClick={() => setCarouselIndex(carouselIndex - 1)}
-              >
-                <ChevronLeftRegular fontSize={18} />
-              </button>
-            )}
-            {carouselIndex < component.screenshots.length - 1 && (
-              <button
-                className={styles.carouselNav}
-                style={{ right: '12px' }}
-                onClick={() => setCarouselIndex(carouselIndex + 1)}
-              >
-                <ChevronRightRegular fontSize={18} />
-              </button>
-            )}
-            {component.screenshots.length > 1 && (
-              <div className={styles.carouselDots}>
-                {component.screenshots.map((_, i) => (
+                )}
+                {carouselIndex < component.screenshots.length - 1 && (
                   <button
-                    key={i}
-                    className={i === carouselIndex ? styles.dotActive : styles.dot}
-                    onClick={() => setCarouselIndex(i)}
-                  />
+                    className={styles.carouselNav}
+                    style={{ right: '12px' }}
+                    onClick={() => setCarouselIndex(carouselIndex + 1)}
+                  >
+                    <ChevronRightRegular fontSize={18} />
+                  </button>
+                )}
+                {component.screenshots.length > 1 && (
+                  <div className={styles.carouselDots}>
+                    {component.screenshots.map((_, i) => (
+                      <button
+                        key={i}
+                        className={i === carouselIndex ? styles.dotActive : styles.dot}
+                        onClick={() => setCarouselIndex(i)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Thumbnail strip */}
+              {component.screenshots.length > 1 && (
+                <div style={{ padding: '12px' }}>
+                  <div style={{ display: 'flex', gap: '8px', overflowX: 'auto' }}>
+                    {component.screenshots.map((screenshot, index) => (
+                      <img
+                        key={screenshot.id}
+                        src={screenshot.url}
+                        alt={screenshot.fileName}
+                        style={{
+                          width: '72px',
+                          height: '48px',
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          border: index === carouselIndex ? '2px solid #0078d4' : '2px solid transparent',
+                          opacity: index === carouselIndex ? 1 : 0.6,
+                          transition: 'all 0.2s',
+                          flexShrink: 0,
+                        }}
+                        onClick={() => setCarouselIndex(index)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {component.files && component.files.length > 1 && (
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <span className={styles.sectionTitle}>Fichiers</span>
+                <span className={styles.sectionCount}>{component.files.length}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {component.files.map((f: ComponentFile) => (
+                  <div
+                    key={f.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.72)',
+                      backdropFilter: 'blur(20px)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(0, 0, 0, 0.04)',
+                    }}
+                  >
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #0078d4 0%, #005a9e 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      flexShrink: 0,
+                    }}>
+                      <DocumentRegular fontSize={16} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '14px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {f.fileName}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#888' }}>
+                        {(f.fileSize / 1024 / 1024).toFixed(1)} Mo
+                      </div>
+                    </div>
+                    <button
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 16px',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(0, 120, 212, 0.2)',
+                        backgroundColor: 'rgba(0, 120, 212, 0.05)',
+                        color: '#0078d4',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                      onClick={() => handleDownload(f.id, f.fileName)}
+                    >
+                      <ArrowDownloadRegular fontSize={14} />
+                      Télécharger
+                    </button>
+                  </div>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* Thumbnail strip */}
-          <div className={styles.screenshotGrid} style={{ marginTop: '16px' }}>
-            {component.screenshots.map((screenshot, index) => (
-              <div
-                key={screenshot.id}
-                className={`${styles.screenshotItem} fade-in-up`}
-                style={{
-                  animationDelay: `${index * 0.08}s`,
-                  animationFillMode: 'backwards',
-                  borderColor: index === carouselIndex ? 'rgba(0, 120, 212, 0.4)' : undefined,
-                  boxShadow: index === carouselIndex ? '0 4px 16px rgba(0, 120, 212, 0.15)' : undefined,
-                }}
-                onClick={() => setCarouselIndex(index)}
-              >
-                <img
-                  src={screenshot.url}
-                  alt={screenshot.fileName}
-                  className={styles.screenshotImg}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {lightboxIndex !== null && (
-        <div className={`${styles.lightbox} fade-in`} onClick={() => setLightboxIndex(null)}>
-          <img
-            src={component.screenshots[lightboxIndex].url}
-            alt={component.screenshots[lightboxIndex].fileName}
-            className={styles.lightboxImg}
-            onClick={(e) => e.stopPropagation()}
-          />
-          <button className={styles.lightboxClose} onClick={() => setLightboxIndex(null)}>
-            <DismissRegular fontSize={18} />
-          </button>
-          {lightboxIndex > 0 && (
-            <button
-              className={styles.lightboxNav}
-              style={{ left: '24px' }}
-              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
-            >
-              <ChevronLeftRegular fontSize={20} />
-            </button>
+            </div>
           )}
-          {lightboxIndex < component.screenshots.length - 1 && (
-            <button
-              className={styles.lightboxNav}
-              style={{ right: '24px' }}
-              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
-            >
-              <ChevronRightRegular fontSize={20} />
-            </button>
-          )}
-        </div>
-      )}
 
-      {/* Comments section */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTitle}>Commentaires</span>
-          <span className={styles.sectionCount}>{comments.length}</span>
-        </div>
+          {/* Comments section */}
+          <div className={styles.section}>
+            <div className={`${styles.mainCard} fade-in-up`} style={{ animationDelay: '0.1s', animationFillMode: 'backwards' }}>
+              <div className={styles.cardInner}>
+                <div className={styles.sectionHeader} style={{ marginBottom: '16px' }}>
+                  <span className={styles.sectionTitle}>Commentaires</span>
+                  <span className={styles.sectionCount}>{comments.length}</span>
+                </div>
 
         {user && (
           <div style={{
@@ -1306,7 +1158,193 @@ export default function DetailPage() {
             );
           })}
         </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* end left col */}
+
+        {/* ── RIGHT COLUMN: sticky details sidebar ── */}
+        <div className={styles.rightCol}>
+          <div className={`${styles.mainCard} fade-in-up`} style={{ animationDelay: '0.05s', animationFillMode: 'backwards' }}>
+            <div className={styles.cardInner}>
+              <h1 className={styles.title}>{component.title}</h1>
+              {component.tags && component.tags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+                  {component.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      style={{
+                        padding: '3px 10px',
+                        borderRadius: '50px',
+                        backgroundColor: SECTOR_TAGS.includes(tag) ? 'rgba(0,120,212,0.08)' : 'rgba(0,90,158,0.08)',
+                        color: SECTOR_TAGS.includes(tag) ? '#0078d4' : '#005a9e',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                      }}
+                    >{tag}</span>
+                  ))}
+                </div>
+              )}
+
+              <div className={styles.statsRow}>
+                <div className={styles.statCard}>
+                  <div className={`${styles.statIcon} ${styles.statIconViews}`}>
+                    <EyeRegular fontSize={16} />
+                  </div>
+                  <div className={styles.statInfo}>
+                    <span className={styles.statValue}>{formatCount(component.view_count || 0)}</span>
+                    <span className={styles.statLabel}>Vues</span>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={`${styles.statIcon} ${styles.statIconDownloads}`}>
+                    <ArrowDownloadRegular fontSize={16} />
+                  </div>
+                  <div className={styles.statInfo}>
+                    <span className={styles.statValue}>{formatCount(downloadCount)}</span>
+                    <span className={styles.statLabel}>Téléch.</span>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={`${styles.statIcon} ${styles.statIconRating}`}>
+                    <StarFilled fontSize={16} />
+                  </div>
+                  <div className={styles.statInfo}>
+                    <span className={styles.statValue}>{averageRating > 0 ? averageRating.toFixed(1) : '—'}</span>
+                    <span className={styles.statLabel}>{ratingCount} avis</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.description} dangerouslySetInnerHTML={{ __html: component.description }} />
+
+              <div className={styles.metaRow}>
+                <div className={styles.metaItem}>
+                  <div className={styles.metaIcon}>
+                    <PersonRegular fontSize={14} />
+                  </div>
+                  <Text weight="semibold">{formatAuthorName(component.author_name)}</Text>
+                </div>
+                <div className={styles.metaItem}>
+                  <div className={styles.metaIcon}>
+                    <CalendarRegular fontSize={14} />
+                  </div>
+                  {formattedDate}
+                </div>
+                <div className={styles.metaItem}>
+                  <div className={styles.metaIcon}>
+                    <DocumentRegular fontSize={14} />
+                  </div>
+                  {component.files && component.files.length > 1
+                    ? `${component.files.length} fichiers`
+                    : component.file_name}
+                </div>
+              </div>
+
+              <div className={styles.actions}>
+                <button className={styles.downloadBtn} onClick={() => handleDownload()}>
+                  <ArrowDownloadRegular fontSize={18} />
+                  Télécharger
+                </button>
+                {isOwner && (
+                  <button className={styles.editBtn} onClick={openEditDialog}>
+                    <EditRegular fontSize={16} />
+                    Modifier
+                  </button>
+                )}
+                {isOwner && (
+                  <Dialog>
+                    <DialogTrigger disableButtonEnhancement>
+                      <button className={styles.deleteBtn}>
+                        <DeleteRegular fontSize={16} />
+                        Supprimer
+                      </button>
+                    </DialogTrigger>
+                    <DialogSurface>
+                      <DialogBody>
+                        <DialogTitle>Supprimer ce composant ?</DialogTitle>
+                        <DialogContent>
+                          Cette action est irréversible. Le composant et tous ses fichiers seront supprimés.
+                        </DialogContent>
+                        <DialogActions>
+                          <DialogTrigger disableButtonEnhancement>
+                            <Button appearance="secondary">Annuler</Button>
+                          </DialogTrigger>
+                          <Button appearance="primary" onClick={handleDelete} disabled={deleting}>
+                            {deleting ? 'Suppression...' : 'Supprimer'}
+                          </Button>
+                        </DialogActions>
+                      </DialogBody>
+                    </DialogSurface>
+                  </Dialog>
+                )}
+              </div>
+
+              {user && (
+                <div className={styles.ratingSection}>
+                  <span className={styles.ratingLabel}>Votre note</span>
+                  <div className={styles.starsRow}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        className={styles.starBtn}
+                        onMouseEnter={() => setHoverStar(star)}
+                        onMouseLeave={() => setHoverStar(0)}
+                        onClick={() => handleRate(star)}
+                        title={`${star}/5`}
+                      >
+                        {star <= (hoverStar || userRating) ? (
+                          <StarFilled fontSize={24} style={{ color: '#ffb900' }} />
+                        ) : (
+                          <StarRegular fontSize={24} style={{ color: '#c8c6c4' }} />
+                        )}
+                      </button>
+                    ))}
+                    <span className={styles.ratingInfo}>
+                      {userRating > 0 ? `${userRating}/5` : 'Notez'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* end right col */}
       </div>
+      {/* end two-col grid */}
+
+      {lightboxIndex !== null && (
+        <div className={`${styles.lightbox} fade-in`} onClick={() => setLightboxIndex(null)}>
+          <img
+            src={component.screenshots[lightboxIndex].url}
+            alt={component.screenshots[lightboxIndex].fileName}
+            className={styles.lightboxImg}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button className={styles.lightboxClose} onClick={() => setLightboxIndex(null)}>
+            <DismissRegular fontSize={18} />
+          </button>
+          {lightboxIndex > 0 && (
+            <button
+              className={styles.lightboxNav}
+              style={{ left: '24px' }}
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
+            >
+              <ChevronLeftRegular fontSize={20} />
+            </button>
+          )}
+          {lightboxIndex < component.screenshots.length - 1 && (
+            <button
+              className={styles.lightboxNav}
+              style={{ right: '24px' }}
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
+            >
+              <ChevronRightRegular fontSize={20} />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Edit dialog */}
       {editing && (
