@@ -5,47 +5,13 @@
   },
   "routes": [
     {
-      "route": "/api/health",
+      "route": "/api/*",
       "methods": ["GET"],
       "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/api/components",
-      "methods": ["GET"],
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/api/components/*/comments",
-      "methods": ["GET"],
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/api/components/*/comments",
-      "methods": ["POST"],
-      "allowedRoles": ["authenticated"]
-    },
-    {
-      "route": "/api/components/*/comments/*",
-      "methods": ["PUT", "DELETE"],
-      "allowedRoles": ["authenticated"]
-    },
-    {
-      "route": "/api/components/*",
-      "methods": ["GET"],
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/api/downloads/*",
-      "methods": ["GET", "POST"],
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/api/ratings/*",
-      "methods": ["POST"],
-      "allowedRoles": ["authenticated"]
     },
     {
       "route": "/api/*",
+      "methods": ["POST", "PUT", "DELETE", "PATCH"],
       "allowedRoles": ["authenticated"]
     },
     {
